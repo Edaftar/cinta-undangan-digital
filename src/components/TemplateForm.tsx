@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -53,12 +52,16 @@ interface TemplateFormProps {
 
 const TemplateForm = ({ templateId }: TemplateFormProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [photos, setPhotos] = useState<{ id: number; url: string }[]>([]);
   
+  // Use existing data if available (e.g., when editing)
+  const existingData = location.state?.weddingData;
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: existingData || {
       brideFullName: "",
       brideName: "",
       brideBio: "",
@@ -75,27 +78,41 @@ const TemplateForm = ({ templateId }: TemplateFormProps) => {
     },
   });
 
+  // Initialize photos from existing data if available
+  useState(() => {
+    if (existingData?.photos) {
+      setPhotos(existingData.photos);
+    }
+  });
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
 
     // In a real app, we would send this data to the backend
-    console.log({
-      templateId,
+    const weddingData = {
       ...values,
       photos
-    });
+    };
+    
+    console.log(weddingData);
 
     setTimeout(() => {
       setIsLoading(false);
       toast.success("Undangan berhasil dibuat!", {
         description: "Sekarang Anda dapat melihat dan membagikan undangan Anda",
       });
-      // In a real app, we would navigate to the preview page
-      navigate(`/preview/${templateId}`);
+      // Navigate to the preview page with the form data
+      navigate(`/preview/${templateId}`, { state: { weddingData } });
     }, 1500);
   }
 
   const handleAddPhoto = () => {
+    // Limit to max 6 photos
+    if (photos.length >= 6) {
+      toast.error("Maksimal 6 foto yang diperbolehkan");
+      return;
+    }
+    
     const newPhoto = { id: Date.now(), url: "/placeholder.svg" };
     setPhotos([...photos, newPhoto]);
   };
@@ -442,15 +459,17 @@ const TemplateForm = ({ templateId }: TemplateFormProps) => {
                   </div>
                 ))}
                 
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-[150px] border-dashed border-2 border-wedding-champagne hover:border-wedding-rosegold hover:bg-wedding-light-blush flex flex-col items-center justify-center gap-2"
-                  onClick={handleAddPhoto}
-                >
-                  <Plus size={24} className="text-wedding-rosegold" />
-                  <span className="text-sm">Tambah Foto</span>
-                </Button>
+                {photos.length < 6 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-[150px] border-dashed border-2 border-wedding-champagne hover:border-wedding-rosegold hover:bg-wedding-light-blush flex flex-col items-center justify-center gap-2"
+                    onClick={handleAddPhoto}
+                  >
+                    <Plus size={24} className="text-wedding-rosegold" />
+                    <span className="text-sm">Tambah Foto</span>
+                  </Button>
+                )}
               </div>
               
               <p className="text-sm text-gray-500">
@@ -491,7 +510,7 @@ const TemplateForm = ({ templateId }: TemplateFormProps) => {
               className="w-full bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white py-6 text-lg" 
               disabled={isLoading}
             >
-              {isLoading ? "Membuat Undangan..." : "Buat Undangan"}
+              {isLoading ? "Membuat Undangan..." : (existingData ? "Perbarui Undangan" : "Buat Undangan")}
             </Button>
           </div>
         </form>

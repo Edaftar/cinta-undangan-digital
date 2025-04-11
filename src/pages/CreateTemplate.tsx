@@ -1,16 +1,19 @@
 
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, Link } from "react-router-dom";
 import { templates } from "@/data/templates";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import TemplateForm from "@/components/TemplateForm";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
-import { Link } from "react-router-dom";
 
 const CreateTemplate = () => {
   const { templateId } = useParams<{ templateId: string }>();
+  const location = useLocation();
   const template = templates.find((t) => t.id === templateId);
+  const existingData = location.state?.weddingData;
+  
+  const isEditing = !!existingData;
 
   if (!template) {
     return (
@@ -52,9 +55,14 @@ const CreateTemplate = () => {
           </div>
           
           <div className="mb-8 text-center">
-            <h1 className="text-3xl md:text-4xl font-bold mb-2 font-playfair">Buat Undangan Pernikahan</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 font-playfair">
+              {isEditing ? "Edit Undangan Pernikahan" : "Buat Undangan Pernikahan"}
+            </h1>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Isi informasi pernikahan Anda untuk membuat undangan digital dengan template {template.name}
+              {isEditing 
+                ? "Edit informasi pernikahan Anda untuk memperbarui undangan digital"
+                : `Isi informasi pernikahan Anda untuk membuat undangan digital dengan template ${template.name}`
+              }
             </p>
           </div>
 
