@@ -29,8 +29,8 @@ const FeaturedTemplates = () => {
               variant={activeCategory === category.id ? "default" : "outline"}
               className={
                 activeCategory === category.id
-                  ? "bg-wedding-purple hover:bg-wedding-deep-purple text-white"
-                  : "border-wedding-purple text-wedding-purple hover:bg-wedding-bg-light"
+                  ? "bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white"
+                  : "border-wedding-rosegold text-wedding-rosegold hover:bg-wedding-light-blush"
               }
               onClick={() => setActiveCategory(category.id)}
             >
@@ -48,7 +48,7 @@ const FeaturedTemplates = () => {
         <div className="text-center mt-12">
           <Button 
             variant="outline" 
-            className="border-wedding-purple text-wedding-purple hover:bg-wedding-bg-light px-8"
+            className="border-wedding-rosegold text-wedding-rosegold hover:bg-wedding-light-blush px-8"
             asChild
           >
             <Link to="/templates">

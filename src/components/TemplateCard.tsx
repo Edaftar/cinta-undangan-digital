@@ -12,7 +12,7 @@ interface TemplateCardProps {
 
 const TemplateCard = ({ template }: TemplateCardProps) => {
   return (
-    <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+    <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border-wedding-champagne">
       <div className="relative">
         <div className="aspect-[3/4] bg-gray-100 overflow-hidden">
           <img 
@@ -23,20 +23,20 @@ const TemplateCard = ({ template }: TemplateCardProps) => {
         </div>
         
         {template.popular && (
-          <Badge className="absolute top-3 right-3 bg-wedding-purple text-white">
+          <Badge className="absolute top-3 right-3 bg-wedding-rosegold text-white">
             Popular
           </Badge>
         )}
       </div>
       
       <CardContent className="pt-4">
-        <h3 className="text-lg font-semibold">{template.name}</h3>
+        <h3 className="text-lg font-playfair font-semibold">{template.name}</h3>
         <p className="text-sm text-gray-600 mt-1">{template.description}</p>
         
         <div className="mt-4 space-y-2">
           {template.features.slice(0, 3).map((feature, index) => (
             <div key={index} className="flex items-center text-sm">
-              <Check size={14} className="text-wedding-purple mr-2 flex-shrink-0" />
+              <Check size={14} className="text-wedding-rosegold mr-2 flex-shrink-0" />
               <span className="text-gray-700">{feature}</span>
             </div>
           ))}
@@ -46,7 +46,7 @@ const TemplateCard = ({ template }: TemplateCardProps) => {
       <CardFooter className="flex justify-between pt-0">
         <Button
           variant="outline"
-          className="border-wedding-purple text-wedding-purple hover:bg-wedding-bg-light"
+          className="border-wedding-rosegold text-wedding-rosegold hover:bg-wedding-light-blush"
           asChild
         >
           <Link to={`/preview/${template.id}`}>
@@ -55,7 +55,7 @@ const TemplateCard = ({ template }: TemplateCardProps) => {
         </Button>
         
         <Button
-          className="bg-wedding-purple hover:bg-wedding-deep-purple text-white"
+          className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white"
           asChild
         >
           <Link to={`/create/${template.id}`}>

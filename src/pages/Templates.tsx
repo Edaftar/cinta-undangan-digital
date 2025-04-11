@@ -21,11 +21,11 @@ const Templates = () => {
   });
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-wedding-ivory">
       <Navbar />
       
       <main className="flex-grow">
-        <div className="bg-wedding-bg-light py-12">
+        <div className="bg-gradient-to-b from-wedding-light-blush to-wedding-ivory py-12">
           <div className="container mx-auto px-4">
             <div className="text-center max-w-2xl mx-auto">
               <h1 className="text-3xl md:text-4xl font-bold mb-4">Template Undangan Pernikahan</h1>
@@ -38,7 +38,7 @@ const Templates = () => {
                 <Input
                   type="text"
                   placeholder="Cari template..."
-                  className="pl-10 py-6"
+                  className="pl-10 py-6 bg-white border-wedding-rosegold focus:border-wedding-deep-rosegold focus:ring-wedding-deep-rosegold"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -51,8 +51,8 @@ const Templates = () => {
                     variant={activeCategory === category.id ? "default" : "outline"}
                     className={
                       activeCategory === category.id
-                        ? "bg-wedding-purple hover:bg-wedding-deep-purple text-white"
-                        : "border-wedding-purple text-wedding-purple hover:bg-wedding-bg-light"
+                        ? "bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white"
+                        : "border-wedding-rosegold text-wedding-rosegold hover:bg-wedding-light-blush"
                     }
                     onClick={() => setActiveCategory(category.id)}
                   >
@@ -64,7 +64,7 @@ const Templates = () => {
           </div>
         </div>
         
-        <div className="py-12">
+        <div className="py-12 bg-white">
           <div className="container mx-auto px-4">
             {filteredTemplates.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -76,7 +76,7 @@ const Templates = () => {
               <div className="text-center py-12">
                 <p className="text-xl text-gray-600">Tidak ada template yang sesuai dengan pencarian Anda.</p>
                 <Button 
-                  className="mt-4 bg-wedding-purple hover:bg-wedding-deep-purple text-white"
+                  className="mt-4 bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white"
                   onClick={() => {
                     setSearchQuery("");
                     setActiveCategory("all");
