@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { templates } from "@/data/templates";
@@ -11,6 +10,7 @@ import ElegantRoseTemplate from "@/components/templates/ElegantRoseTemplate";
 import MinimalistTemplate from "@/components/templates/MinimalistTemplate";
 import RusticTemplate from "@/components/templates/RusticTemplate";
 import { toast } from "sonner";
+import { generateInvitationPDF } from "@/utils/pdfUtils";
 
 interface Invitation {
   id: string;
@@ -40,6 +40,7 @@ const PreviewTemplate = () => {
   const { templateId, slug } = useParams<{ templateId?: string, slug?: string }>();
   const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const location = useLocation();
   
   // Get data from location state if available (passed from the form)
@@ -98,6 +99,23 @@ const PreviewTemplate = () => {
       // Fallback for browsers that don't support sharing
       navigator.clipboard.writeText(window.location.href);
       toast.success("Tautan berhasil disalin ke clipboard");
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    setDownloading(true);
+    try {
+      const result = await generateInvitationPDF('invitation-container', `undangan-${displayData?.bride_name}-${displayData?.groom_name}.pdf`);
+      if (result) {
+        toast.success("Undangan berhasil diunduh");
+      } else {
+        toast.error("Gagal mengunduh undangan");
+      }
+    } catch (error) {
+      toast.error("Gagal mengunduh undangan");
+      console.error("PDF download error:", error);
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -175,7 +193,7 @@ const PreviewTemplate = () => {
 
   // If we're viewing a public invitation by slug, show only the template without navigation
   if (slug && invitation) {
-    return <div>{getTemplateComponent()}</div>;
+    return <div id="invitation-container">{getTemplateComponent()}</div>;
   }
 
   return (
@@ -204,9 +222,22 @@ const PreviewTemplate = () => {
                 Bagikan
               </Button>
               
-              <Button className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white">
-                <Download size={16} className="mr-1" />
-                Unduh PDF
+              <Button 
+                className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white"
+                onClick={handleDownloadPDF}
+                disabled={downloading}
+              >
+                {downloading ? (
+                  <>
+                    <Loader2 size={16} className="mr-2 animate-spin" />
+                    Mengunduh...
+                  </>
+                ) : (
+                  <>
+                    <Download size={16} className="mr-1" />
+                    Unduh PDF
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -218,7 +249,7 @@ const PreviewTemplate = () => {
             </p>
           </div>
           
-          <div className="mx-auto max-w-4xl mb-8">
+          <div id="invitation-container" className="mx-auto max-w-4xl mb-8">
             {getTemplateComponent()}
           </div>
           
