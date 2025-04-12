@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -49,11 +48,13 @@ import {
   Loader2,
   MusicIcon,
   LineChart,
-  Settings
+  Settings,
+  ImageIcon
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import MusicManager from "@/components/admin/MusicManager";
+import ImageManager from "@/components/admin/ImageManager";
 
 interface User {
   id: string;
@@ -422,7 +423,7 @@ const AdminPanel = () => {
             transition={{ delay: 0.3, duration: 0.5 }}
           >
             <Tabs defaultValue="invitations" className="space-y-6">
-              <TabsList className="grid w-full md:w-auto md:inline-flex grid-cols-4 h-auto">
+              <TabsList className="grid w-full md:w-auto md:inline-flex grid-cols-5 h-auto">
                 <TabsTrigger value="invitations" className="px-4 py-2">
                   <Mail size={16} className="mr-2" /> Invitations
                 </TabsTrigger>
@@ -435,13 +436,17 @@ const AdminPanel = () => {
                 <TabsTrigger value="music" className="px-4 py-2">
                   <MusicIcon size={16} className="mr-2" /> Music
                 </TabsTrigger>
+                <TabsTrigger value="images" className="px-4 py-2">
+                  <ImageIcon size={16} className="mr-2" /> Images
+                </TabsTrigger>
               </TabsList>
 
               {/* Invitations Tab */}
               <TabsContent value="invitations" className="space-y-4">
                 <div className="bg-white p-6 rounded-lg shadow-sm">
                   <h2 className="text-xl font-semibold mb-4">Manage Invitations</h2>
-                  {loadingData ? (
+                  {
+                  loadingData ? (
                     <div className="flex justify-center p-8">
                       <Loader2 className="h-8 w-8 animate-spin text-wedding-rosegold" />
                     </div>
@@ -509,7 +514,8 @@ const AdminPanel = () => {
                         </TableBody>
                       </Table>
                     </div>
-                  )}
+                  )
+                }
                 </div>
               </TabsContent>
 
@@ -517,7 +523,8 @@ const AdminPanel = () => {
               <TabsContent value="users" className="space-y-4">
                 <div className="bg-white p-6 rounded-lg shadow-sm">
                   <h2 className="text-xl font-semibold mb-4">Manage Users</h2>
-                  {loadingData ? (
+                  {
+                  loadingData ? (
                     <div className="flex justify-center p-8">
                       <Loader2 className="h-8 w-8 animate-spin text-wedding-rosegold" />
                     </div>
@@ -567,7 +574,8 @@ const AdminPanel = () => {
                         </TableBody>
                       </Table>
                     </div>
-                  )}
+                  )
+                }
                 </div>
               </TabsContent>
 
@@ -575,7 +583,8 @@ const AdminPanel = () => {
               <TabsContent value="subscriptions" className="space-y-4">
                 <div className="bg-white p-6 rounded-lg shadow-sm">
                   <h2 className="text-xl font-semibold mb-4">Monitor Subscriptions</h2>
-                  {loadingData ? (
+                  {
+                  loadingData ? (
                     <div className="flex justify-center p-8">
                       <Loader2 className="h-8 w-8 animate-spin text-wedding-rosegold" />
                     </div>
@@ -637,7 +646,8 @@ const AdminPanel = () => {
                         </TableBody>
                       </Table>
                     </div>
-                  )}
+                  )
+                }
                 </div>
               </TabsContent>
 
@@ -645,6 +655,13 @@ const AdminPanel = () => {
               <TabsContent value="music" className="space-y-4">
                 <div className="bg-white p-6 rounded-lg shadow-sm">
                   <MusicManager />
+                </div>
+              </TabsContent>
+              
+              {/* Images Tab */}
+              <TabsContent value="images" className="space-y-4">
+                <div className="bg-white p-6 rounded-lg shadow-sm">
+                  <ImageManager />
                 </div>
               </TabsContent>
             </Tabs>
@@ -655,6 +672,7 @@ const AdminPanel = () => {
 
       {/* View Invitation Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Invitation Details</DialogTitle>
@@ -736,6 +754,7 @@ const AdminPanel = () => {
 
       {/* Settings Sidebar */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        
         <SheetContent className="w-full sm:max-w-md bg-wedding-ivory">
           <SheetHeader className="pb-4">
             <SheetTitle>Admin Settings</SheetTitle>
