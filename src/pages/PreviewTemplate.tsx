@@ -1,5 +1,6 @@
 
-import { useParams, Link, useLocation, useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { templates } from "@/data/templates";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
