@@ -18,6 +18,7 @@ import Signup from "./pages/auth/Signup";
 import Dashboard from "./pages/Dashboard";
 import About from "./pages/About";
 import Pricing from "./pages/Pricing";
+import AdminPanel from "./pages/AdminPanel";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,11 @@ const App = () => (
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <AdminPanel />
               </ProtectedRoute>
             } />
             <Route path="/invitation/:slug" element={<PreviewTemplate />} />
