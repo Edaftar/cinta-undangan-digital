@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { templates } from "@/data/templates";
@@ -11,6 +12,9 @@ import MinimalistTemplate from "@/components/templates/MinimalistTemplate";
 import RusticTemplate from "@/components/templates/RusticTemplate";
 import { toast } from "sonner";
 import { generateInvitationPDF } from "@/utils/pdfUtils";
+import MusicPlayer from "@/components/MusicPlayer";
+import { fetchMusicById } from "@/services/musicService";
+import { motion } from "framer-motion";
 
 interface Invitation {
   id: string;
@@ -34,6 +38,7 @@ interface Invitation {
   love_story?: string;
   gallery?: string[];
   user_id: string;
+  music_id?: string;
 }
 
 const PreviewTemplate = () => {
@@ -41,6 +46,7 @@ const PreviewTemplate = () => {
   const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [music, setMusic] = useState<{url: string, title?: string, artist?: string} | null>(null);
   const location = useLocation();
   
   // Get data from location state if available (passed from the form)
@@ -64,6 +70,18 @@ const PreviewTemplate = () => {
         
         if (data) {
           setInvitation(data);
+          
+          // Fetch music if music_id is available
+          if (data.music_id) {
+            const musicData = await fetchMusicById(data.music_id);
+            if (musicData) {
+              setMusic({
+                url: musicData.url,
+                title: musicData.title,
+                artist: musicData.artist || undefined
+              });
+            }
+          }
         }
       } catch (error: any) {
         console.error("Error fetching invitation:", error);
@@ -133,16 +151,34 @@ const PreviewTemplate = () => {
       <div className="min-h-screen flex flex-col bg-wedding-ivory">
         <Navbar />
         <main className="flex-grow flex flex-col items-center justify-center p-4">
-          <h1 className="text-3xl font-bold mb-4">Template Tidak Ditemukan</h1>
-          <p className="text-gray-600 mb-6">
+          <motion.h1 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-3xl font-bold mb-4"
+          >
+            Template Tidak Ditemukan
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="text-gray-600 mb-6"
+          >
             Maaf, template yang Anda cari tidak tersedia.
-          </p>
-          <Button asChild>
-            <Link to="/templates" className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white">
-              <ChevronLeft size={16} />
-              Kembali ke Galeri Template
-            </Link>
-          </Button>
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+          >
+            <Button asChild>
+              <Link to="/templates" className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white">
+                <ChevronLeft size={16} />
+                Kembali ke Galeri Template
+              </Link>
+            </Button>
+          </motion.div>
         </main>
         <Footer />
       </div>
@@ -154,16 +190,34 @@ const PreviewTemplate = () => {
       <div className="min-h-screen flex flex-col bg-wedding-ivory">
         <Navbar />
         <main className="flex-grow flex flex-col items-center justify-center p-4">
-          <h1 className="text-3xl font-bold mb-4">Undangan Tidak Ditemukan</h1>
-          <p className="text-gray-600 mb-6">
+          <motion.h1 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-3xl font-bold mb-4"
+          >
+            Undangan Tidak Ditemukan
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="text-gray-600 mb-6"
+          >
             Maaf, undangan yang Anda cari tidak tersedia.
-          </p>
-          <Button asChild>
-            <Link to="/" className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white">
-              <ChevronLeft size={16} />
-              Kembali ke Halaman Utama
-            </Link>
-          </Button>
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+          >
+            <Button asChild>
+              <Link to="/" className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white">
+                <ChevronLeft size={16} />
+                Kembali ke Halaman Utama
+              </Link>
+            </Button>
+          </motion.div>
         </main>
         <Footer />
       </div>
@@ -193,14 +247,24 @@ const PreviewTemplate = () => {
 
   // If we're viewing a public invitation by slug, show only the template without navigation
   if (slug && invitation) {
-    return <div id="invitation-container">{getTemplateComponent()}</div>;
+    return (
+      <div className="relative">
+        {music && <MusicPlayer audioUrl={music.url} title={music.title} artist={music.artist} autoplay={true} iconOnly={true} />}
+        <div id="invitation-container">{getTemplateComponent()}</div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-wedding-ivory">
       <Navbar />
       <main className="flex-grow py-8">
-        <div className="container mx-auto px-4">
+        <motion.div 
+          className="container mx-auto px-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
           <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <Button
               variant="outline"
@@ -242,18 +306,43 @@ const PreviewTemplate = () => {
             </div>
           </div>
           
-          <div className="text-center mb-8">
+          <motion.div 
+            className="text-center mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
             <h1 className="text-3xl md:text-4xl font-bold mb-2 font-playfair">Pratinjau Undangan</h1>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Ini adalah tampilan undangan digital Anda menggunakan template {template?.name}
             </p>
-          </div>
+          </motion.div>
           
-          <div id="invitation-container" className="mx-auto max-w-4xl mb-8">
+          <motion.div 
+            id="invitation-container" 
+            className="mx-auto max-w-4xl mb-8"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.7 }}
+          >
+            {music && (
+              <div className="mb-4 flex justify-center">
+                <MusicPlayer 
+                  audioUrl={music.url}
+                  title={music.title}
+                  artist={music.artist}
+                />
+              </div>
+            )}
             {getTemplateComponent()}
-          </div>
+          </motion.div>
           
-          <div className="text-center space-y-6 max-w-2xl mx-auto">
+          <motion.div 
+            className="text-center space-y-6 max-w-2xl mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+          >
             <div className="p-6 bg-wedding-light-blush rounded-lg shadow-sm">
               <Heart className="text-wedding-rosegold mx-auto mb-3" fill="#D8A7B1" />
               <p className="text-gray-700">
@@ -288,8 +377,8 @@ const PreviewTemplate = () => {
                 </Button>
               )}
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </main>
       <Footer />
     </div>

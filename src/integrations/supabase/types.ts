@@ -76,6 +76,7 @@ export type Database = {
           location_map_url: string | null
           love_story: string | null
           main_date: string
+          music_id: string | null
           reception_date: string | null
           slug: string
           template_id: string
@@ -102,6 +103,7 @@ export type Database = {
           location_map_url?: string | null
           love_story?: string | null
           main_date: string
+          music_id?: string | null
           reception_date?: string | null
           slug: string
           template_id: string
@@ -128,12 +130,51 @@ export type Database = {
           location_map_url?: string | null
           love_story?: string | null
           main_date?: string
+          music_id?: string | null
           reception_date?: string | null
           slug?: string
           template_id?: string
           title?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_music_id_fkey"
+            columns: ["music_id"]
+            isOneToOne: false
+            referencedRelation: "music_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      music_options: {
+        Row: {
+          artist: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          title: string
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          artist?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          title: string
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          artist?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          updated_at?: string | null
+          url?: string
         }
         Relationships: []
       }
@@ -164,6 +205,27 @@ export type Database = {
           last_name?: string | null
           phone?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -208,7 +270,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

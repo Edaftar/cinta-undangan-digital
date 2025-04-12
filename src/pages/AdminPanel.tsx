@@ -27,6 +27,14 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetClose
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
   ChevronLeft,
@@ -39,8 +47,13 @@ import {
   Trash2,
   Eye,
   Loader2,
+  MusicIcon,
+  LineChart,
+  Settings
 } from "lucide-react";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
+import MusicManager from "@/components/admin/MusicManager";
 
 interface User {
   id: string;
@@ -80,6 +93,7 @@ interface Invitation {
   active: boolean;
   user_id: string;
   user_email?: string;
+  slug?: string;
 }
 
 const AdminPanel = () => {
@@ -95,6 +109,12 @@ const AdminPanel = () => {
 
   const [selectedInvitation, setSelectedInvitation] = useState<Invitation | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [dashboard, setDashboard] = useState({
+    totalUsers: 0,
+    totalInvitations: 0,
+    activeInvitations: 0
+  });
   
   // Check if user is admin
   useEffect(() => {
@@ -105,19 +125,15 @@ const AdminPanel = () => {
       }
 
       try {
-        // In a real app, you would check against a proper admin table or role system
-        // For this demo, we'll consider the first registered user as admin
+        // Check if user has admin role
         const { data, error } = await supabase
-          .from("profiles")
+          .from("roles")
           .select("*")
-          .order("created_at", { ascending: true })
-          .limit(1);
+          .eq("user_id", user.id)
+          .eq("role", "admin")
+          .single();
 
-        if (error) throw error;
-        
-        // Check if current user is the first user (admin)
-        const isUserAdmin = data && data.length > 0 && data[0].id === user.id;
-        setIsAdmin(isUserAdmin);
+        setIsAdmin(!!data);
       } catch (error: any) {
         console.error("Error checking admin status:", error.message);
         toast.error("Failed to verify admin privileges");
@@ -128,6 +144,17 @@ const AdminPanel = () => {
 
     checkAdminStatus();
   }, [user]);
+
+  // Apply smooth scrolling to the whole page
+  useEffect(() => {
+    // Add smooth scrolling to html element
+    document.documentElement.style.scrollBehavior = 'smooth';
+    
+    return () => {
+      // Reset scroll behavior when component unmounts
+      document.documentElement.style.scrollBehavior = '';
+    };
+  }, []);
 
   // Fetch data for admin dashboard
   useEffect(() => {
@@ -144,6 +171,12 @@ const AdminPanel = () => {
         
         if (profilesError) throw profilesError;
         setProfiles(profilesData || []);
+        
+        // Update dashboard stats
+        setDashboard(prev => ({
+          ...prev,
+          totalUsers: profilesData?.length || 0
+        }));
 
         // Fetch subscriptions with user info
         const { data: subsData, error: subsError } = await supabase
@@ -195,6 +228,13 @@ const AdminPanel = () => {
         }));
         
         setInvitations(enhancedInvitations);
+        
+        // Update dashboard stats
+        setDashboard(prev => ({
+          ...prev,
+          totalInvitations: enhancedInvitations.length || 0,
+          activeInvitations: enhancedInvitations.filter(inv => inv.active).length || 0
+        }));
       } catch (error: any) {
         console.error("Error fetching admin data:", error.message);
         toast.error("Failed to load admin data");
@@ -219,6 +259,14 @@ const AdminPanel = () => {
       setInvitations(invitations.map(inv => 
         inv.id === invitation.id ? { ...inv, active: !inv.active } : inv
       ));
+      
+      // Update dashboard stats
+      setDashboard(prev => ({
+        ...prev,
+        activeInvitations: invitation.active 
+          ? prev.activeInvitations - 1 
+          : prev.activeInvitations + 1
+      }));
       
       toast.success(`Invitation ${invitation.active ? "disabled" : "activated"} successfully`);
     } catch (error: any) {
@@ -251,16 +299,34 @@ const AdminPanel = () => {
       <div className="min-h-screen flex flex-col bg-wedding-ivory">
         <Navbar />
         <main className="flex-grow flex flex-col items-center justify-center p-4">
-          <h1 className="text-3xl font-bold mb-4 text-gray-800">Access Denied</h1>
-          <p className="text-gray-600 mb-6 text-center">
+          <motion.h1 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-3xl font-bold mb-4 text-gray-800"
+          >
+            Access Denied
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="text-gray-600 mb-6 text-center"
+          >
             You don't have permission to access the admin panel.
-          </p>
-          <Button asChild>
-            <a href="/" className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white">
-              <ChevronLeft size={16} className="mr-1" />
-              Back to Home
-            </a>
-          </Button>
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+          >
+            <Button asChild>
+              <a href="/" className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white">
+                <ChevronLeft size={16} className="mr-1" />
+                Back to Home
+              </a>
+            </Button>
+          </motion.div>
         </main>
         <Footer />
       </div>
@@ -271,239 +337,319 @@ const AdminPanel = () => {
     <div className="min-h-screen flex flex-col bg-wedding-ivory">
       <Navbar />
       <main className="flex-grow py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-gray-800">Admin Panel</h1>
-            <Button
-              variant="outline"
-              className="border-wedding-rosegold text-wedding-rosegold hover:bg-wedding-light-blush"
-              asChild
-            >
-              <a href="/">
-                <ChevronLeft size={16} className="mr-1" />
-                Back to Home
-              </a>
-            </Button>
+        <motion.div 
+          className="container mx-auto px-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800">Admin Panel</h1>
+              <p className="text-gray-600">Manage your wedding platform from here</p>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setSheetOpen(true)}
+                className="border-wedding-sage text-wedding-sage hover:bg-wedding-sage/10"
+              >
+                <Settings size={16} className="mr-1" />
+                Settings
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="border-wedding-rosegold text-wedding-rosegold hover:bg-wedding-light-blush"
+                asChild
+              >
+                <a href="/">
+                  <ChevronLeft size={16} className="mr-1" />
+                  Back to Home
+                </a>
+              </Button>
+            </div>
           </div>
 
-          <Tabs defaultValue="users" className="space-y-6">
-            <TabsList className="grid w-full md:w-auto md:inline-flex grid-cols-3 h-auto">
-              <TabsTrigger value="users" className="px-4 py-2">
-                <Users size={16} className="mr-2" /> Users
-              </TabsTrigger>
-              <TabsTrigger value="subscriptions" className="px-4 py-2">
-                <CreditCard size={16} className="mr-2" /> Subscriptions
-              </TabsTrigger>
-              <TabsTrigger value="invitations" className="px-4 py-2">
-                <Mail size={16} className="mr-2" /> Invitations
-              </TabsTrigger>
-            </TabsList>
+          {/* Dashboard Stats */}
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg shadow-sm">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-blue-600 font-medium">Total Users</p>
+                  <h3 className="text-2xl font-bold mt-1">{dashboard.totalUsers}</h3>
+                </div>
+                <div className="bg-blue-100 p-2 rounded-full">
+                  <Users className="text-blue-500" size={20} />
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg shadow-sm">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-green-600 font-medium">Active Invitations</p>
+                  <h3 className="text-2xl font-bold mt-1">{dashboard.activeInvitations}</h3>
+                </div>
+                <div className="bg-green-100 p-2 rounded-full">
+                  <Mail className="text-green-500" size={20} />
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-lg shadow-sm">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-purple-600 font-medium">Total Invitations</p>
+                  <h3 className="text-2xl font-bold mt-1">{dashboard.totalInvitations}</h3>
+                </div>
+                <div className="bg-purple-100 p-2 rounded-full">
+                  <LineChart className="text-purple-500" size={20} />
+                </div>
+              </div>
+            </div>
+          </motion.div>
 
-            {/* Users Tab */}
-            <TabsContent value="users" className="space-y-4">
-              <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h2 className="text-xl font-semibold mb-4">Manage Users</h2>
-                {loadingData ? (
-                  <div className="flex justify-center p-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-wedding-rosegold" />
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Joined</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {profiles.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+          >
+            <Tabs defaultValue="invitations" className="space-y-6">
+              <TabsList className="grid w-full md:w-auto md:inline-flex grid-cols-4 h-auto">
+                <TabsTrigger value="invitations" className="px-4 py-2">
+                  <Mail size={16} className="mr-2" /> Invitations
+                </TabsTrigger>
+                <TabsTrigger value="users" className="px-4 py-2">
+                  <Users size={16} className="mr-2" /> Users
+                </TabsTrigger>
+                <TabsTrigger value="subscriptions" className="px-4 py-2">
+                  <CreditCard size={16} className="mr-2" /> Subscriptions
+                </TabsTrigger>
+                <TabsTrigger value="music" className="px-4 py-2">
+                  <MusicIcon size={16} className="mr-2" /> Music
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Invitations Tab */}
+              <TabsContent value="invitations" className="space-y-4">
+                <div className="bg-white p-6 rounded-lg shadow-sm">
+                  <h2 className="text-xl font-semibold mb-4">Manage Invitations</h2>
+                  {loadingData ? (
+                    <div className="flex justify-center p-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-wedding-rosegold" />
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                              No users found
-                            </TableCell>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Couple</TableHead>
+                            <TableHead>Template</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>User</TableHead>
+                            <TableHead>Created</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                           </TableRow>
-                        ) : (
-                          profiles.map((profile) => (
-                            <TableRow key={profile.id}>
-                              <TableCell>
-                                {profile.first_name && profile.last_name
-                                  ? `${profile.first_name} ${profile.last_name}`
-                                  : "N/A"}
-                              </TableCell>
-                              <TableCell>{profile.email || "N/A"}</TableCell>
-                              <TableCell>
-                                {new Date(profile.created_at).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-gray-500 hover:text-gray-700"
-                                  onClick={() => toast.info("User details functionality coming soon")}
-                                >
-                                  <Eye size={16} />
-                                </Button>
+                        </TableHeader>
+                        <TableBody>
+                          {invitations.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                                No invitations found
                               </TableCell>
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
+                          ) : (
+                            invitations.map((invitation) => (
+                              <TableRow key={invitation.id}>
+                                <TableCell>{invitation.title}</TableCell>
+                                <TableCell>{`${invitation.bride_name} & ${invitation.groom_name}`}</TableCell>
+                                <TableCell>{invitation.template_id}</TableCell>
+                                <TableCell>
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    invitation.active
+                                      ? 'bg-green-100 text-green-800'
+                                      : 'bg-red-100 text-red-800'
+                                  }`}>
+                                    {invitation.active ? 'Active' : 'Inactive'}
+                                  </span>
+                                </TableCell>
+                                <TableCell>{invitation.user_email}</TableCell>
+                                <TableCell>
+                                  {new Date(invitation.created_at).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell className="text-right space-x-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-gray-500 hover:text-gray-700"
+                                    onClick={() => viewInvitationDetails(invitation)}
+                                  >
+                                    <Eye size={16} />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className={invitation.active ? "text-red-500 hover:text-red-700" : "text-green-500 hover:text-green-700"}
+                                    onClick={() => toggleInvitationStatus(invitation)}
+                                  >
+                                    {invitation.active ? <X size={16} /> : <Check size={16} />}
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
 
-            {/* Subscriptions Tab */}
-            <TabsContent value="subscriptions" className="space-y-4">
-              <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h2 className="text-xl font-semibold mb-4">Monitor Subscriptions</h2>
-                {loadingData ? (
-                  <div className="flex justify-center p-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-wedding-rosegold" />
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>User</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Plan</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>End Date</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {subscriptions.length === 0 ? (
+              {/* Users Tab */}
+              <TabsContent value="users" className="space-y-4">
+                <div className="bg-white p-6 rounded-lg shadow-sm">
+                  <h2 className="text-xl font-semibold mb-4">Manage Users</h2>
+                  {loadingData ? (
+                    <div className="flex justify-center p-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-wedding-rosegold" />
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                              No subscriptions found
-                            </TableCell>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Joined</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                           </TableRow>
-                        ) : (
-                          subscriptions.map((subscription) => (
-                            <TableRow key={subscription.id}>
-                              <TableCell>{subscription.user_name || "Unknown"}</TableCell>
-                              <TableCell>{subscription.user_email || "Unknown"}</TableCell>
-                              <TableCell>
-                                <span className="capitalize">{subscription.plan_id}</span>
-                              </TableCell>
-                              <TableCell>
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  subscription.status === 'active'
-                                    ? 'bg-green-100 text-green-800'
-                                    : subscription.status === 'trial'
-                                    ? 'bg-blue-100 text-blue-800'
-                                    : 'bg-red-100 text-red-800'
-                                }`}>
-                                  {subscription.status}
-                                </span>
-                              </TableCell>
-                              <TableCell>
-                                {new Date(subscription.current_period_end).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-gray-500 hover:text-gray-700"
-                                  onClick={() => toast.info("Subscription management coming soon")}
-                                >
-                                  <Eye size={16} />
-                                </Button>
+                        </TableHeader>
+                        <TableBody>
+                          {profiles.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                                No users found
                               </TableCell>
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
+                          ) : (
+                            profiles.map((profile) => (
+                              <TableRow key={profile.id}>
+                                <TableCell>
+                                  {profile.first_name && profile.last_name
+                                    ? `${profile.first_name} ${profile.last_name}`
+                                    : "N/A"}
+                                </TableCell>
+                                <TableCell>{profile.email || "N/A"}</TableCell>
+                                <TableCell>
+                                  {new Date(profile.created_at).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-gray-500 hover:text-gray-700"
+                                    onClick={() => toast.info("User details functionality coming soon")}
+                                  >
+                                    <Eye size={16} />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
 
-            {/* Invitations Tab */}
-            <TabsContent value="invitations" className="space-y-4">
-              <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h2 className="text-xl font-semibold mb-4">Manage Invitations</h2>
-                {loadingData ? (
-                  <div className="flex justify-center p-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-wedding-rosegold" />
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Title</TableHead>
-                          <TableHead>Couple</TableHead>
-                          <TableHead>Template</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>User</TableHead>
-                          <TableHead>Created</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {invitations.length === 0 ? (
+              {/* Subscriptions Tab */}
+              <TabsContent value="subscriptions" className="space-y-4">
+                <div className="bg-white p-6 rounded-lg shadow-sm">
+                  <h2 className="text-xl font-semibold mb-4">Monitor Subscriptions</h2>
+                  {loadingData ? (
+                    <div className="flex justify-center p-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-wedding-rosegold" />
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                              No invitations found
-                            </TableCell>
+                            <TableHead>User</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Plan</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>End Date</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                           </TableRow>
-                        ) : (
-                          invitations.map((invitation) => (
-                            <TableRow key={invitation.id}>
-                              <TableCell>{invitation.title}</TableCell>
-                              <TableCell>{`${invitation.bride_name} & ${invitation.groom_name}`}</TableCell>
-                              <TableCell>{invitation.template_id}</TableCell>
-                              <TableCell>
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  invitation.active
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
-                                }`}>
-                                  {invitation.active ? 'Active' : 'Inactive'}
-                                </span>
-                              </TableCell>
-                              <TableCell>{invitation.user_email}</TableCell>
-                              <TableCell>
-                                {new Date(invitation.created_at).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell className="text-right space-x-1">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-gray-500 hover:text-gray-700"
-                                  onClick={() => viewInvitationDetails(invitation)}
-                                >
-                                  <Eye size={16} />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className={invitation.active ? "text-red-500 hover:text-red-700" : "text-green-500 hover:text-green-700"}
-                                  onClick={() => toggleInvitationStatus(invitation)}
-                                >
-                                  {invitation.active ? <X size={16} /> : <Check size={16} />}
-                                </Button>
+                        </TableHeader>
+                        <TableBody>
+                          {subscriptions.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                                No subscriptions found
                               </TableCell>
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+                          ) : (
+                            subscriptions.map((subscription) => (
+                              <TableRow key={subscription.id}>
+                                <TableCell>{subscription.user_name || "Unknown"}</TableCell>
+                                <TableCell>{subscription.user_email || "Unknown"}</TableCell>
+                                <TableCell>
+                                  <span className="capitalize">{subscription.plan_id}</span>
+                                </TableCell>
+                                <TableCell>
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    subscription.status === 'active'
+                                      ? 'bg-green-100 text-green-800'
+                                      : subscription.status === 'trial'
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : 'bg-red-100 text-red-800'
+                                  }`}>
+                                    {subscription.status}
+                                  </span>
+                                </TableCell>
+                                <TableCell>
+                                  {new Date(subscription.current_period_end).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-gray-500 hover:text-gray-700"
+                                    onClick={() => toast.info("Subscription management coming soon")}
+                                  >
+                                    <Eye size={16} />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              {/* Music Tab */}
+              <TabsContent value="music" className="space-y-4">
+                <div className="bg-white p-6 rounded-lg shadow-sm">
+                  <MusicManager />
+                </div>
+              </TabsContent>
+            </Tabs>
+          </motion.div>
+        </motion.div>
       </main>
       <Footer />
 
@@ -562,7 +708,11 @@ const AdminPanel = () => {
                 </Button>
                 <Button
                   onClick={() => {
-                    window.open(`/invitation/${selectedInvitation.id}`, '_blank');
+                    // If slug exists, use it; otherwise use id
+                    const path = selectedInvitation.slug 
+                      ? `/invitation/${selectedInvitation.slug}`
+                      : `/invitation/${selectedInvitation.id}`;
+                    window.open(path, '_blank');
                   }}
                   className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white"
                 >
@@ -583,6 +733,61 @@ const AdminPanel = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Settings Sidebar */}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent className="w-full sm:max-w-md bg-wedding-ivory">
+          <SheetHeader className="pb-4">
+            <SheetTitle>Admin Settings</SheetTitle>
+            <SheetDescription>
+              Configure your admin panel and system settings.
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="mt-6 space-y-6">
+            <div className="bg-white p-4 rounded-lg border shadow-sm">
+              <h3 className="font-medium text-lg mb-3">System Information</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between pb-2 border-b">
+                  <span className="text-gray-600">Version</span>
+                  <span className="font-medium">1.0.0</span>
+                </div>
+                <div className="flex justify-between pb-2 border-b">
+                  <span className="text-gray-600">Database Status</span>
+                  <span className="text-green-600 font-medium">Connected</span>
+                </div>
+                <div className="flex justify-between pb-2 border-b">
+                  <span className="text-gray-600">Storage</span>
+                  <span className="font-medium">Supabase</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Last Update</span>
+                  <span className="font-medium">{new Date().toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white p-4 rounded-lg border shadow-sm">
+              <h3 className="font-medium text-lg mb-3">Currently Logged In As</h3>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-wedding-rosegold rounded-full flex items-center justify-center text-white font-medium">
+                  A
+                </div>
+                <div>
+                  <p className="font-medium">Admin</p>
+                  <p className="text-xs text-gray-500">admin@admin.com</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="pt-4 flex justify-end">
+              <SheetClose asChild>
+                <Button>Close Settings</Button>
+              </SheetClose>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
