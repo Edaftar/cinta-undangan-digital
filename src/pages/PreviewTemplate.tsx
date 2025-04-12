@@ -153,16 +153,23 @@ const PreviewTemplate = () => {
   }
 
   const getTemplateComponent = () => {
+    // Fix: Make sure we normalize gallery data to avoid undefined values
+    const safeDisplayData = {
+      ...displayData,
+      // Make sure gallery exists and is an array
+      gallery: Array.isArray(displayData?.gallery) ? displayData?.gallery : []
+    };
+    
     switch(currentTemplateId) {
       case 'elegant-1':
-        return <ElegantRoseTemplate data={displayData} />;
+        return <ElegantRoseTemplate data={safeDisplayData} />;
       case 'minimalist-1':
-        return <MinimalistTemplate data={displayData} />;
+        return <MinimalistTemplate data={safeDisplayData} />;
       case 'rustic-1':
-        return <RusticTemplate data={displayData} />;
+        return <RusticTemplate data={safeDisplayData} />;
       // Add more cases here as you develop more templates
       default:
-        return <ElegantRoseTemplate data={displayData} />; // Fallback to elegant template
+        return <ElegantRoseTemplate data={safeDisplayData} />; // Fallback to elegant template
     }
   };
 

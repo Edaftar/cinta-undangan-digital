@@ -54,6 +54,9 @@ const ElegantRoseTemplate = ({ data, isPreview = false }: ElegantRoseTemplatePro
 
   const weddingData = isPreview ? previewData : data || previewData;
   
+  // Ensure photos is always an array
+  const safePhotos = Array.isArray(weddingData.photos) ? weddingData.photos : [];
+  
   return (
     <div className="w-full max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
       {/* Cover Section */}
@@ -79,7 +82,7 @@ const ElegantRoseTemplate = ({ data, isPreview = false }: ElegantRoseTemplatePro
           <div className="grid md:grid-cols-2 gap-12 md:gap-20">
             <div className="space-y-6">
               <div className="w-48 h-48 mx-auto rounded-full overflow-hidden border-4 border-wedding-rosegold">
-                <img src={weddingData.photos[0]?.url || "/placeholder.svg"} alt="Bride" className="w-full h-full object-cover" />
+                <img src={safePhotos[0]?.url || "/placeholder.svg"} alt="Bride" className="w-full h-full object-cover" />
               </div>
               <div>
                 <h3 className="font-playfair text-2xl font-semibold text-wedding-rosegold">{weddingData.brideFullName}</h3>
@@ -90,7 +93,7 @@ const ElegantRoseTemplate = ({ data, isPreview = false }: ElegantRoseTemplatePro
 
             <div className="space-y-6">
               <div className="w-48 h-48 mx-auto rounded-full overflow-hidden border-4 border-wedding-rosegold">
-                <img src={weddingData.photos[1]?.url || "/placeholder.svg"} alt="Groom" className="w-full h-full object-cover" />
+                <img src={safePhotos[1]?.url || "/placeholder.svg"} alt="Groom" className="w-full h-full object-cover" />
               </div>
               <div>
                 <h3 className="font-playfair text-2xl font-semibold text-wedding-rosegold">{weddingData.groomFullName}</h3>
@@ -159,12 +162,12 @@ const ElegantRoseTemplate = ({ data, isPreview = false }: ElegantRoseTemplatePro
       </section>
 
       {/* Gallery Section */}
-      {weddingData.photos.length > 0 && (
+      {safePhotos.length > 0 && (
         <section className="py-16 px-6 bg-wedding-ivory">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="font-playfair text-3xl md:text-4xl font-bold mb-10 text-wedding-text">Galeri</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {weddingData.photos.map((photo) => (
+              {safePhotos.map((photo) => (
                 <div key={photo.id} className="aspect-square overflow-hidden rounded-lg shadow-md">
                   <img 
                     src={photo.url} 
