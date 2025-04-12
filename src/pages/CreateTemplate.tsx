@@ -90,7 +90,7 @@ const CreateTemplate = () => {
               </div>
             </div>
             <div className="w-full lg:w-2/3">
-              <TemplateForm templateId={template.id} />
+              <TemplateForm templateId={template.id} existingData={existingData} />
             </div>
           </div>
         </div>

@@ -9,7 +9,200 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      guests: {
+        Row: {
+          attendance_status: string | null
+          created_at: string
+          email: string | null
+          id: string
+          invitation_id: string
+          message: string | null
+          name: string
+          number_of_guests: number | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          attendance_status?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          invitation_id: string
+          message?: string | null
+          name: string
+          number_of_guests?: number | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attendance_status?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          invitation_id?: string
+          message?: string | null
+          name?: string
+          number_of_guests?: number | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guests_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "invitations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invitations: {
+        Row: {
+          active: boolean | null
+          akad_date: string | null
+          bride_father: string | null
+          bride_mother: string | null
+          bride_name: string
+          bride_photo: string | null
+          created_at: string
+          gallery: string[] | null
+          groom_father: string | null
+          groom_mother: string | null
+          groom_name: string
+          groom_photo: string | null
+          id: string
+          location: string
+          location_address: string | null
+          location_map_url: string | null
+          love_story: string | null
+          main_date: string
+          reception_date: string | null
+          slug: string
+          template_id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          akad_date?: string | null
+          bride_father?: string | null
+          bride_mother?: string | null
+          bride_name: string
+          bride_photo?: string | null
+          created_at?: string
+          gallery?: string[] | null
+          groom_father?: string | null
+          groom_mother?: string | null
+          groom_name: string
+          groom_photo?: string | null
+          id?: string
+          location: string
+          location_address?: string | null
+          location_map_url?: string | null
+          love_story?: string | null
+          main_date: string
+          reception_date?: string | null
+          slug: string
+          template_id: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean | null
+          akad_date?: string | null
+          bride_father?: string | null
+          bride_mother?: string | null
+          bride_name?: string
+          bride_photo?: string | null
+          created_at?: string
+          gallery?: string[] | null
+          groom_father?: string | null
+          groom_mother?: string | null
+          groom_name?: string
+          groom_photo?: string | null
+          id?: string
+          location?: string
+          location_address?: string | null
+          location_map_url?: string | null
+          love_story?: string | null
+          main_date?: string
+          reception_date?: string | null
+          slug?: string
+          template_id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string
+          current_period_end: string
+          current_period_start: string
+          id: string
+          plan_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end: string
+          current_period_start: string
+          id?: string
+          plan_id: string
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string
+          current_period_start?: string
+          id?: string
+          plan_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

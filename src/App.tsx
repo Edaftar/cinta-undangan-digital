@@ -4,11 +4,20 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
+
+// Pages
 import Index from "./pages/Index";
 import Templates from "./pages/Templates";
 import CreateTemplate from "./pages/CreateTemplate";
 import PreviewTemplate from "./pages/PreviewTemplate";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/auth/Login";
+import Signup from "./pages/auth/Signup";
+import Dashboard from "./pages/Dashboard";
+import About from "./pages/About";
+import Pricing from "./pages/Pricing";
 
 const queryClient = new QueryClient();
 
@@ -18,14 +27,30 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/templates" element={<Templates />} />
-          <Route path="/create/:templateId" element={<CreateTemplate />} />
-          <Route path="/preview/:templateId" element={<PreviewTemplate />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/templates" element={<Templates />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/auth/login" element={<Login />} />
+            <Route path="/auth/signup" element={<Signup />} />
+            <Route path="/create/:templateId" element={
+              <ProtectedRoute>
+                <CreateTemplate />
+              </ProtectedRoute>
+            } />
+            <Route path="/preview/:templateId" element={<PreviewTemplate />} />
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/invitation/:slug" element={<PreviewTemplate />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

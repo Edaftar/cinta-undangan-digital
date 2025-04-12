@@ -1,25 +1,90 @@
 
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, useEffect, useState } from "react";
 import { templates } from "@/data/templates";
+import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Share2, Download, Heart } from "lucide-react";
+import { ChevronLeft, Share2, Download, Heart, Loader2 } from "lucide-react";
 import ElegantRoseTemplate from "@/components/templates/ElegantRoseTemplate";
+import MinimalistTemplate from "@/components/templates/MinimalistTemplate";
+import RusticTemplate from "@/components/templates/RusticTemplate";
 import { toast } from "sonner";
 
+interface Invitation {
+  id: string;
+  title: string;
+  template_id: string;
+  slug: string;
+  bride_name: string;
+  bride_father?: string;
+  bride_mother?: string;
+  bride_photo?: string;
+  groom_name: string;
+  groom_father?: string;
+  groom_mother?: string;
+  groom_photo?: string;
+  main_date: string;
+  akad_date?: string;
+  reception_date?: string;
+  location: string;
+  location_address?: string;
+  location_map_url?: string;
+  love_story?: string;
+  gallery?: string[];
+  user_id: string;
+}
+
 const PreviewTemplate = () => {
-  const { templateId } = useParams<{ templateId: string }>();
-  const template = templates.find((t) => t.id === templateId);
+  const { templateId, slug } = useParams<{ templateId?: string, slug?: string }>();
+  const [invitation, setInvitation] = useState<Invitation | null>(null);
+  const [loading, setLoading] = useState(false);
   const location = useLocation();
   
   // Get data from location state if available (passed from the form)
   const weddingData = location.state?.weddingData;
 
+  // If we have a slug parameter, fetch invitation from database
+  useEffect(() => {
+    const fetchInvitationBySlug = async () => {
+      if (!slug) return;
+      
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("invitations")
+          .select("*")
+          .eq("slug", slug)
+          .eq("active", true)
+          .single();
+
+        if (error) throw error;
+        
+        if (data) {
+          setInvitation(data);
+        }
+      } catch (error: any) {
+        console.error("Error fetching invitation:", error);
+        toast.error("Undangan tidak ditemukan");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInvitationBySlug();
+  }, [slug]);
+
+  // Use template ID from params or from fetched invitation
+  const currentTemplateId = templateId || invitation?.template_id;
+  const template = templates.find((t) => t.id === currentTemplateId);
+  
+  // Use data from weddingData (form) or fetched invitation
+  const displayData = weddingData || invitation;
+
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: `Undangan Pernikahan ${weddingData?.brideName || 'Pengantin'} & ${weddingData?.groomName || 'Pengantin'}`,
+        title: `Undangan Pernikahan ${displayData?.bride_name || 'Pengantin'} & ${displayData?.groom_name || 'Pengantin'}`,
         text: 'Kami mengundang Anda untuk hadir di acara pernikahan kami',
         url: window.location.href,
       })
@@ -35,7 +100,16 @@ const PreviewTemplate = () => {
     }
   };
 
-  if (!template) {
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-wedding-ivory">
+        <Loader2 className="h-12 w-12 animate-spin text-wedding-rosegold" />
+        <p className="mt-4 text-gray-600">Memuat undangan...</p>
+      </div>
+    );
+  }
+
+  if (!template && !slug) {
     return (
       <div className="min-h-screen flex flex-col bg-wedding-ivory">
         <Navbar />
@@ -56,19 +130,45 @@ const PreviewTemplate = () => {
     );
   }
 
+  if (!displayData && slug) {
+    return (
+      <div className="min-h-screen flex flex-col bg-wedding-ivory">
+        <Navbar />
+        <main className="flex-grow flex flex-col items-center justify-center p-4">
+          <h1 className="text-3xl font-bold mb-4">Undangan Tidak Ditemukan</h1>
+          <p className="text-gray-600 mb-6">
+            Maaf, undangan yang Anda cari tidak tersedia.
+          </p>
+          <Button asChild>
+            <Link to="/" className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white">
+              <ChevronLeft size={16} />
+              Kembali ke Halaman Utama
+            </Link>
+          </Button>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   const getTemplateComponent = () => {
-    switch(template.id) {
+    switch(currentTemplateId) {
       case 'elegant-1':
-        return <ElegantRoseTemplate data={weddingData} />;
+        return <ElegantRoseTemplate data={displayData} />;
+      case 'minimalist-1':
+        return <MinimalistTemplate data={displayData} />;
+      case 'rustic-1':
+        return <RusticTemplate data={displayData} />;
       // Add more cases here as you develop more templates
       default:
-        return (
-          <div className="bg-white p-8 rounded-lg shadow-md text-center">
-            <p className="text-lg text-gray-600">Template preview belum tersedia</p>
-          </div>
-        );
+        return <ElegantRoseTemplate data={displayData} />; // Fallback to elegant template
     }
   };
+
+  // If we're viewing a public invitation by slug, show only the template without navigation
+  if (slug && invitation) {
+    return <div>{getTemplateComponent()}</div>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-wedding-ivory">
@@ -106,7 +206,7 @@ const PreviewTemplate = () => {
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold mb-2 font-playfair">Pratinjau Undangan</h1>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Ini adalah tampilan undangan digital Anda menggunakan template {template.name}
+              Ini adalah tampilan undangan digital Anda menggunakan template {template?.name}
             </p>
           </div>
           
@@ -131,7 +231,7 @@ const PreviewTemplate = () => {
                   className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white px-8"
                   asChild
                 >
-                  <Link to={`/create/${template.id}`}>
+                  <Link to={`/create/${currentTemplateId}`}>
                     Buat Undangan
                   </Link>
                 </Button>
@@ -143,7 +243,7 @@ const PreviewTemplate = () => {
                   className="border-wedding-rosegold text-wedding-rosegold hover:bg-wedding-light-blush px-8"
                   asChild
                 >
-                  <Link to={`/create/${template.id}`} state={{ weddingData }}>
+                  <Link to={`/create/${currentTemplateId}`} state={{ weddingData }}>
                     Edit Undangan
                   </Link>
                 </Button>
