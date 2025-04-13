@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X, User, Settings, LogOut } from 'lucide-react';
@@ -21,7 +21,7 @@ const Navbar = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   
   // Check if user is admin
-  useState(() => {
+  useEffect(() => {
     const checkAdminRole = async () => {
       if (!user) return;
       
