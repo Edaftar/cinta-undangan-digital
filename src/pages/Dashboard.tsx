@@ -1,183 +1,273 @@
-
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, Edit, Eye, Trash, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-
-interface Invitation {
-  id: string;
-  title: string;
-  template_id: string;
-  slug: string;
-  bride_name: string;
-  groom_name: string;
-  main_date: string;
-  created_at: string;
-}
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { Plus, Copy, Loader2, Pencil } from 'lucide-react';
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { generateRandomString } from '@/lib/utils';
+import GuestList from '@/components/GuestList';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [invitations, setInvitations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
+  const [templateId, setTemplateId] = useState('elegant-1'); // Default template
+  const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchInvitations = async () => {
+      if (!user) return;
+
       try {
         const { data, error } = await supabase
-          .from("invitations")
-          .select("id, title, template_id, slug, bride_name, groom_name, main_date, created_at")
-          .eq("user_id", user?.id)
-          .order("created_at", { ascending: false });
+          .from('invitations')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
 
         if (error) throw error;
-        setInvitations(data || []);
-      } catch (error: any) {
-        toast.error("Gagal memuat undangan: " + error.message);
+
+        if (data) {
+          setInvitations(data);
+        }
+      } catch (error) {
+        console.error("Error fetching invitations:", error);
+        toast.error("Failed to load invitations.");
       } finally {
         setLoading(false);
       }
     };
 
-    if (user) {
-      fetchInvitations();
-    }
+    fetchInvitations();
   }, [user]);
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Apakah Anda yakin ingin menghapus undangan ini?")) {
-      try {
-        const { error } = await supabase
-          .from("invitations")
-          .delete()
-          .eq("id", id);
+  const handleCreateInvitation = async () => {
+    if (!user) return;
 
-        if (error) throw error;
-        setInvitations(invitations.filter(inv => inv.id !== id));
-        toast.success("Undangan berhasil dihapus");
-      } catch (error: any) {
-        toast.error("Gagal menghapus undangan: " + error.message);
-      }
+    setIsSubmitting(true);
+    try {
+      // Generate a random slug if it's empty
+      const finalSlug = slug || generateRandomString(8);
+
+      const { data, error } = await supabase
+        .from('invitations')
+        .insert([
+          { 
+            user_id: user.id, 
+            title, 
+            slug: finalSlug,
+            template_id: templateId,
+            active: true, // Set active to true by default
+          }
+        ]);
+
+      if (error) throw error;
+
+      // Optimistically update the invitations list
+      setInvitations(prevInvitations => [
+        ...prevInvitations,
+        { 
+          id: data ? data[0].id : generateRandomString(10), // Use a temporary ID if data is not available
+          user_id: user.id, 
+          title, 
+          slug: finalSlug,
+          template_id: templateId,
+          active: true,
+          created_at: new Date().toISOString(), // Use current time
+        }
+      ]);
+
+      toast.success("Invitation created successfully!");
+      setOpen(false); // Close the dialog
+      setTitle(''); // Reset the title
+      setSlug(''); // Reset the slug
+    } catch (error) {
+      console.error("Error creating invitation:", error);
+      toast.error("Failed to create invitation.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('id-ID', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }).format(date);
+  const handleCopyToClipboard = (slug: string) => {
+    const invitationLink = `${window.location.origin}/invitation/${slug}`;
+    navigator.clipboard.writeText(invitationLink)
+      .then(() => {
+        toast.success("Link copied to clipboard!");
+      })
+      .catch(err => {
+        console.error("Could not copy text: ", err);
+        toast.error("Failed to copy link to clipboard.");
+      });
   };
 
-  return (
-    <div className="min-h-screen flex flex-col bg-wedding-ivory">
-      <Navbar />
-      <main className="flex-grow py-12">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-            <div className="mb-4 md:mb-0">
-              <h1 className="text-3xl font-bold font-playfair text-gray-800">Dashboard</h1>
-              <p className="text-gray-600 mt-1">
-                Kelola undangan pernikahan digital Anda
-              </p>
-            </div>
-            <Button asChild className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold">
-              <Link to="/templates">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Buat Undangan Baru
-              </Link>
-            </Button>
-          </div>
+  const toggleInvitationStatus = async (id: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('invitations')
+        .update({ active: !currentStatus })
+        .eq('id', id);
 
-          {loading ? (
-            <div className="flex justify-center my-12">
-              <Loader2 className="h-8 w-8 animate-spin text-wedding-rosegold" />
-            </div>
-          ) : invitations.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-md p-12 text-center">
-              <h2 className="text-2xl font-semibold mb-4">Belum Ada Undangan</h2>
-              <p className="text-gray-600 mb-6">
-                Anda belum membuat undangan pernikahan digital. Mulailah dengan membuat undangan pertama Anda.
-              </p>
-              <Button asChild className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold">
-                <Link to="/templates">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Buat Undangan Sekarang
-                </Link>
+      if (error) throw error;
+
+      // Optimistically update the invitations list
+      setInvitations(prevInvitations =>
+        prevInvitations.map(invitation =>
+          invitation.id === id ? { ...invitation, active: !currentStatus } : invitation
+        )
+      );
+
+      toast.success(`Invitation ${!currentStatus ? 'activated' : 'deactivated'}!`);
+    } catch (error) {
+      console.error("Error updating invitation status:", error);
+      toast.error("Failed to update invitation status.");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-wedding-ivory">
+        <Loader2 className="h-12 w-12 animate-spin text-wedding-rosegold" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto py-10">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+          <CardTitle className="text-2xl font-bold">Dashboard</CardTitle>
+          <CardDescription>Manage your wedding invitations</CardDescription>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Invitation
               </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Create Invitation</DialogTitle>
+                <DialogDescription>
+                  Create a new invitation to share with your loved ones.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="title" className="text-right">
+                    Title
+                  </Label>
+                  <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="slug" className="text-right">
+                    Slug
+                  </Label>
+                  <Input id="slug" value={slug} onChange={(e) => setSlug(e.target.value)} className="col-span-3" />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="submit" onClick={handleCreateInvitation} disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+        <CardContent>
+          {invitations.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No invitations created yet.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {invitations.map((invitation) => (
-                <Card key={invitation.id} className="overflow-hidden">
-                  <CardHeader className="bg-wedding-light-blush pb-2">
-                    <CardTitle>{invitation.title}</CardTitle>
-                    <CardDescription>
-                      {invitation.bride_name} & {invitation.groom_name}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-4">
-                    <div className="space-y-2">
-                      <p className="text-sm text-gray-500">
-                        <span className="font-semibold">Tanggal:</span>{" "}
-                        {formatDate(invitation.main_date)}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        <span className="font-semibold">Slug:</span>{" "}
-                        {invitation.slug}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        <span className="font-semibold">Dibuat:</span>{" "}
-                        {formatDate(invitation.created_at)}
-                      </p>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between border-t pt-4">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      asChild
-                    >
-                      <Link to={`/invitation/${invitation.slug}`}>
-                        <Eye className="h-4 w-4 mr-1" />
-                        Lihat
-                      </Link>
-                    </Button>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        asChild
-                      >
-                        <Link to={`/create/${invitation.template_id}`} state={{ weddingData: invitation }}>
-                          <Edit className="h-4 w-4 mr-1" />
-                          Edit
-                        </Link>
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="text-red-500 border-red-500 hover:bg-red-50"
-                        onClick={() => handleDelete(invitation.id)}
-                      >
-                        <Trash className="h-4 w-4 mr-1" />
-                        Hapus
-                      </Button>
-                    </div>
-                  </CardFooter>
-                </Card>
-              ))}
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Slug</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="text-center">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {invitations.map((invitation) => (
+                    <>
+                      <TableRow key={invitation.id}>
+                        <TableCell className="font-medium">{invitation.title}</TableCell>
+                        <TableCell>{invitation.slug}</TableCell>
+                        <TableCell className="text-right flex gap-2 justify-end">
+                          <Button size="sm" variant="outline" onClick={() => handleCopyToClipboard(invitation.slug)}>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Copy Link
+                          </Button>
+                          <Button size="sm" asChild>
+                            <Link to={`/create/${invitation.template_id}`} state={{ weddingData: invitation }}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </Link>
+                          </Button>
+                          <Button size="sm" asChild>
+                            <Link to={`/preview/${invitation.template_id}`} state={{ weddingData: invitation }}>
+                              Preview
+                            </Link>
+                          </Button>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            size="sm"
+                            variant={invitation.active ? "destructive" : "outline"}
+                            onClick={() => toggleInvitationStatus(invitation.id, invitation.active)}
+                          >
+                            {invitation.active ? 'Deactivate' : 'Activate'}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow key={`${invitation.id}-guestlist`}>
+                        <TableCell colSpan={5}>
+                          <GuestList invitationId={invitation.id} invitationTitle={invitation.title} />
+                        </TableCell>
+                      </TableRow>
+                    </>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
-        </div>
-      </main>
-      <Footer />
+        </CardContent>
+      </Card>
     </div>
   );
 };

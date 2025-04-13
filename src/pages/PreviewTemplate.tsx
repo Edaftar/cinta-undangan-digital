@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { templates } from "@/data/templates";
@@ -10,6 +9,7 @@ import { ChevronLeft, Share2, Download, Heart, Loader2 } from "lucide-react";
 import ElegantRoseTemplate from "@/components/templates/ElegantRoseTemplate";
 import MinimalistTemplate from "@/components/templates/MinimalistTemplate";
 import RusticTemplate from "@/components/templates/RusticTemplate";
+import RSVP from "@/components/RSVP";
 import { toast } from "sonner";
 import { generateInvitationPDF } from "@/utils/pdfUtils";
 import MusicPlayer from "@/components/MusicPlayer";
@@ -251,6 +251,13 @@ const PreviewTemplate = () => {
       <div className="relative">
         {music && <MusicPlayer audioUrl={music.url} title={music.title} artist={music.artist} autoplay={true} iconOnly={true} />}
         <div id="invitation-container">{getTemplateComponent()}</div>
+        
+        {/* Add RSVP section for public invitations */}
+        <section className="py-16 px-4 bg-wedding-ivory">
+          <div className="max-w-md mx-auto">
+            <RSVP invitationId={invitation.id} invitationTitle={invitation.title} />
+          </div>
+        </section>
       </div>
     );
   }
