@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -29,9 +30,36 @@ import {
 import { generateRandomString } from '@/lib/utils';
 import GuestList from '@/components/GuestList';
 
+interface Invitation {
+  id: string;
+  user_id: string;
+  title: string;
+  slug: string;
+  template_id: string;
+  active: boolean;
+  bride_name: string;
+  groom_name: string;
+  location: string;
+  main_date: string;
+  bride_father?: string;
+  bride_mother?: string;
+  bride_photo?: string;
+  groom_father?: string;
+  groom_mother?: string;
+  groom_photo?: string;
+  akad_date?: string;
+  reception_date?: string;
+  location_address?: string;
+  location_map_url?: string;
+  love_story?: string;
+  gallery?: string[];
+  created_at: string;
+  updated_at?: string;
+}
+
 const Dashboard = () => {
   const { user } = useAuth();
-  const [invitations, setInvitations] = useState([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
@@ -92,7 +120,7 @@ const Dashboard = () => {
       if (error) throw error;
 
       // Optimistically update the invitations list
-      const newInvitation = {
+      const newInvitation: Invitation = {
         id: generateRandomString(10), // Use a temporary ID since data might be null
         user_id: user.id, 
         title, 
@@ -112,7 +140,7 @@ const Dashboard = () => {
       setOpen(false); // Close the dialog
       setTitle(''); // Reset the title
       setSlug(''); // Reset the slug
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating invitation:", error);
       toast.error("Failed to create invitation.");
     } finally {
@@ -149,7 +177,7 @@ const Dashboard = () => {
       );
 
       toast.success(`Invitation ${!currentStatus ? 'activated' : 'deactivated'}!`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating invitation status:", error);
       toast.error("Failed to update invitation status.");
     }
@@ -230,8 +258,8 @@ const Dashboard = () => {
                 </TableHeader>
                 <TableBody>
                   {invitations.map((invitation) => (
-                    <>
-                      <TableRow key={invitation.id}>
+                    <React.Fragment key={invitation.id}>
+                      <TableRow>
                         <TableCell className="font-medium">{invitation.title}</TableCell>
                         <TableCell>{invitation.slug}</TableCell>
                         <TableCell className="text-right flex gap-2 justify-end">
@@ -266,7 +294,7 @@ const Dashboard = () => {
                           <GuestList invitationId={invitation.id} invitationTitle={invitation.title} />
                         </TableCell>
                       </TableRow>
-                    </>
+                    </React.Fragment>
                   ))}
                 </TableBody>
               </Table>
