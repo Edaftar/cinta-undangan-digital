@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -94,7 +93,7 @@ const Dashboard = () => {
 
       // Optimistically update the invitations list
       const newInvitation = {
-        id: data?.[0]?.id || generateRandomString(10), // Use actual ID if available or a temporary one
+        id: generateRandomString(10), // Use a temporary ID since data might be null
         user_id: user.id, 
         title, 
         slug: finalSlug,
