@@ -9,6 +9,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  isAdmin: boolean;
+  checkingAdmin: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -20,7 +22,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
   const navigate = useNavigate();
+
+  // Function to check if user is admin
+  const checkAdminStatus = async (userId: string) => {
+    try {
+      setCheckingAdmin(true);
+      const { data, error } = await supabase
+        .from('roles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .single();
+          
+      if (data && !error) {
+        console.log("User is admin:", data);
+        setIsAdmin(true);
+      } else {
+        console.log("User is not admin or error:", error);
+        setIsAdmin(false);
+      }
+      
+      setCheckingAdmin(false);
+    } catch (error) {
+      console.error("Error checking admin role:", error);
+      setIsAdmin(false);
+      setCheckingAdmin(false);
+    }
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -29,6 +60,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("Auth state changed:", event, session);
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Check admin status if user exists
+        if (session?.user) {
+          checkAdminStatus(session.user.id);
+        } else {
+          setIsAdmin(false);
+          setCheckingAdmin(false);
+        }
+
+        // Redirect admin users to admin panel after login
+        if (session?.user && isAdmin && event === 'SIGNED_IN') {
+          navigate('/admin');
+        }
+        
         setIsLoading(false);
       }
     );
@@ -38,11 +83,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log("Initial session check:", session);
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Check admin status if user exists
+      if (session?.user) {
+        checkAdminStatus(session.user.id);
+      } else {
+        setIsAdmin(false);
+        setCheckingAdmin(false);
+      }
+      
       setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -55,7 +109,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) throw error;
       
       toast.success("Login berhasil!");
-      navigate("/dashboard");
+      
+      // Redirect will be handled by the auth state change listener
     } catch (error: any) {
       toast.error(error.message || "Gagal masuk. Silakan coba lagi.");
     } finally {
@@ -97,10 +152,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Clear state after successful logout
       setUser(null);
       setSession(null);
+      setIsAdmin(false);
       
       toast.success("Berhasil keluar!");
       navigate("/");
     } catch (error: any) {
+      console.error("Sign out error:", error);
       toast.error(error.message || "Gagal keluar. Silakan coba lagi.");
     } finally {
       setIsLoading(false);
@@ -113,6 +170,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         user,
         session,
         isLoading,
+        isAdmin,
+        checkingAdmin,
         signIn,
         signUp,
         signOut,

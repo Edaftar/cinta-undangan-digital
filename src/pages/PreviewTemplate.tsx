@@ -52,6 +52,7 @@ const PreviewTemplate = () => {
   const [downloading, setDownloading] = useState(false);
   const [music, setMusic] = useState<{url: string, title?: string, artist?: string} | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Get data from location state if available (passed from the form)
   const weddingData = location.state?.weddingData;
@@ -73,6 +74,7 @@ const PreviewTemplate = () => {
         if (error) throw error;
         
         if (data) {
+          console.log("Fetched invitation data:", data);
           setInvitation(data);
           
           // Fetch music if music_id is available
@@ -104,6 +106,9 @@ const PreviewTemplate = () => {
   
   // Use data from weddingData (form) or fetched invitation
   const displayData = weddingData || invitation;
+
+  console.log("Current template ID:", currentTemplateId);
+  console.log("Display data:", displayData);
 
   const handleShare = () => {
     if (navigator.share) {
@@ -236,6 +241,9 @@ const PreviewTemplate = () => {
       gallery: Array.isArray(displayData?.gallery) ? displayData?.gallery : []
     };
     
+    console.log("Template being rendered:", currentTemplateId);
+    console.log("With data:", safeDisplayData);
+    
     switch(currentTemplateId) {
       case 'elegant-1':
         return <ElegantRoseTemplate data={safeDisplayData} />;
@@ -243,7 +251,12 @@ const PreviewTemplate = () => {
         return <MinimalistTemplate data={safeDisplayData} />;
       case 'rustic-1':
         return <RusticTemplate data={safeDisplayData} />;
-      // Add more cases here as you develop more templates
+      case 'traditional-1':
+        return <TraditionalJavaTemplate data={safeDisplayData} />;
+      case 'modern-1':
+        return <ModernGeometryTemplate data={safeDisplayData} />;
+      case 'islamic-1':
+        return <IslamicOrnamentTemplate data={safeDisplayData} />;
       default:
         return <ElegantRoseTemplate data={safeDisplayData} />; // Fallback to elegant template
     }
