@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X, User, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +19,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
+  const navigate = useNavigate();
   
   // Check if user is admin
   useEffect(() => {
@@ -50,6 +51,7 @@ const Navbar = () => {
     try {
       await signOut();
       toast.success("Berhasil keluar!");
+      navigate('/');
     } catch (error) {
       toast.error("Gagal keluar. Silakan coba lagi.");
     }

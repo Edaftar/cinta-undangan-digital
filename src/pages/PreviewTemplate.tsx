@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import { templates } from "@/data/templates";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
@@ -9,6 +10,9 @@ import { ChevronLeft, Share2, Download, Heart, Loader2 } from "lucide-react";
 import ElegantRoseTemplate from "@/components/templates/ElegantRoseTemplate";
 import MinimalistTemplate from "@/components/templates/MinimalistTemplate";
 import RusticTemplate from "@/components/templates/RusticTemplate";
+import TraditionalJavaTemplate from "@/components/templates/TraditionalJavaTemplate";
+import ModernGeometryTemplate from "@/components/templates/ModernGeometryTemplate";
+import IslamicOrnamentTemplate from "@/components/templates/IslamicOrnamentTemplate";
 import RSVP from "@/components/RSVP";
 import { toast } from "sonner";
 import { generateInvitationPDF } from "@/utils/pdfUtils";
