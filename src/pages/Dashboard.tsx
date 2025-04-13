@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -74,33 +75,39 @@ const Dashboard = () => {
       // Generate a random slug if it's empty
       const finalSlug = slug || generateRandomString(8);
 
+      // Include all required fields based on the Supabase schema
       const { data, error } = await supabase
         .from('invitations')
-        .insert([
-          { 
-            user_id: user.id, 
-            title, 
-            slug: finalSlug,
-            template_id: templateId,
-            active: true, // Set active to true by default
-          }
-        ]);
-
-      if (error) throw error;
-
-      // Optimistically update the invitations list
-      setInvitations(prevInvitations => [
-        ...prevInvitations,
-        { 
-          id: data ? data[0].id : generateRandomString(10), // Use a temporary ID if data is not available
+        .insert({
           user_id: user.id, 
           title, 
           slug: finalSlug,
           template_id: templateId,
           active: true,
-          created_at: new Date().toISOString(), // Use current time
-        }
-      ]);
+          bride_name: "Bride Name", // Default value for required field
+          groom_name: "Groom Name", // Default value for required field
+          location: "Wedding Location", // Default value for required field
+          main_date: new Date().toISOString(), // Default value for required field
+        });
+
+      if (error) throw error;
+
+      // Optimistically update the invitations list
+      const newInvitation = {
+        id: data?.[0]?.id || generateRandomString(10), // Use actual ID if available or a temporary one
+        user_id: user.id, 
+        title, 
+        slug: finalSlug,
+        template_id: templateId,
+        active: true,
+        bride_name: "Bride Name",
+        groom_name: "Groom Name",
+        location: "Wedding Location",
+        main_date: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      };
+      
+      setInvitations(prevInvitations => [newInvitation, ...prevInvitations]);
 
       toast.success("Invitation created successfully!");
       setOpen(false); // Close the dialog
