@@ -49,7 +49,7 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
       // Fetch preferences from the database
       const { data, error } = await supabase
         .from('profiles')
-        .select('email_notifications, dark_mode, language')
+        .select('*')
         .eq('id', user?.id)
         .single();
       
@@ -64,11 +64,15 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
       }
       
       if (data) {
-        // Use optional chaining and default values to handle potentially missing properties
+        // Check if the columns exist in the response before accessing them
+        const emailNotifications = data.email_notifications !== undefined ? data.email_notifications : true;
+        const darkMode = data.dark_mode !== undefined ? data.dark_mode : false;
+        const language = data.language !== undefined ? data.language : 'en';
+        
         setPreferences({
-          emailNotifications: data.email_notifications ?? true,
-          darkMode: data.dark_mode ?? false,
-          language: data.language ?? 'en',
+          emailNotifications,
+          darkMode,
+          language
         });
       }
       
@@ -89,15 +93,36 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
     
     setSaving(true);
     try {
+      // First, let's check if the columns exist
+      const { data: tableInfo, error: tableError } = await supabase
+        .from('profiles')
+        .select('*')
+        .limit(1);
+      
+      if (tableError) {
+        console.error('Error checking table structure:', tableError);
+        throw tableError;
+      }
+      
       // Save preferences to the database
+      const updateData: any = { updated_at: new Date().toISOString() };
+      
+      // Only add fields if they exist in the table schema
+      if ('email_notifications' in (tableInfo?.[0] || {})) {
+        updateData.email_notifications = preferences.emailNotifications;
+      }
+      
+      if ('dark_mode' in (tableInfo?.[0] || {})) {
+        updateData.dark_mode = preferences.darkMode;
+      }
+      
+      if ('language' in (tableInfo?.[0] || {})) {
+        updateData.language = preferences.language;
+      }
+      
       const { error } = await supabase
         .from('profiles')
-        .update({
-          email_notifications: preferences.emailNotifications,
-          dark_mode: preferences.darkMode,
-          language: preferences.language,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', user.id);
       
       if (error) throw error;
@@ -105,7 +130,7 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
       toast.success('Preferences updated successfully');
     } catch (error) {
       console.error('Error saving preferences:', error);
-      toast.error('Failed to save preferences');
+      toast.error('Failed to save preferences. The required columns might be missing in the database.');
     } finally {
       setSaving(false);
     }

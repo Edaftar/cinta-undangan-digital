@@ -30,8 +30,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const checkAdminStatus = async (userId: string) => {
     try {
       setCheckingAdmin(true);
+      console.log("Checking admin status for user:", userId);
       
-      // Call the is_admin function instead of querying roles table
+      // Call the is_admin function
       const { data, error } = await supabase.rpc('is_admin');
       
       if (error) {
@@ -39,7 +40,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setIsAdmin(false);
       } else {
         console.log("Admin check result:", data);
-        setIsAdmin(!!data); // Convert to boolean
+        setIsAdmin(!!data);
+        
+        // If user is admin and is on login page, redirect to admin panel
+        if (!!data && window.location.pathname.includes('/auth/login')) {
+          navigate('/admin');
+        }
       }
       
       setCheckingAdmin(false);
@@ -53,22 +59,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state changed:", event, session);
-        setSession(session);
-        setUser(session?.user ?? null);
+      async (event, currentSession) => {
+        console.log("Auth state changed:", event, currentSession?.user?.email);
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
         
         // Check admin status if user exists
-        if (session?.user) {
-          checkAdminStatus(session.user.id);
+        if (currentSession?.user) {
+          await checkAdminStatus(currentSession.user.id);
         } else {
           setIsAdmin(false);
           setCheckingAdmin(false);
         }
 
-        // Redirect admin users to admin panel after login
-        if (session?.user && event === 'SIGNED_IN') {
-          // We'll check if admin and redirect in a setTimeout to avoid deadlocks
+        // Redirect based on authentication status
+        if (currentSession?.user && event === 'SIGNED_IN') {
           setTimeout(() => {
             if (isAdmin) {
               navigate('/admin');
@@ -83,14 +88,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", session);
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
+      console.log("Initial session check:", currentSession?.user?.email);
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
       
       // Check admin status if user exists
-      if (session?.user) {
-        checkAdminStatus(session.user.id);
+      if (currentSession?.user) {
+        await checkAdminStatus(currentSession.user.id);
       } else {
         setIsAdmin(false);
         setCheckingAdmin(false);
