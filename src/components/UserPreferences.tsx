@@ -46,9 +46,14 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
         .eq('id', user?.id)
         .single();
       
-      if (error && error.code !== 'PGRST116') {
-        // PGRST116 means no rows returned, which is fine for new users
-        throw error;
+      if (error) {
+        if (error.code !== 'PGRST116') {
+          // PGRST116 means no rows returned, which is fine for new users
+          console.error('Error fetching preferences:', error);
+          toast.error('Failed to load preferences');
+        }
+        setLoading(false);
+        return;
       }
       
       if (data) {

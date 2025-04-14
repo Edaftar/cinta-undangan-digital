@@ -4,16 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Button } from '@/components/ui/button';
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Camera } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import UserPreferences from "@/components/UserPreferences";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ProfileAvatar from '@/components/profile/ProfileAvatar';
+import ProfileForm from '@/components/profile/ProfileForm';
 
 interface ProfileData {
   id: string;
@@ -29,7 +27,6 @@ const UserProfile = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -110,50 +107,26 @@ const UserProfile = () => {
     }
   };
   
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || !e.target.files[0]) return;
+  const handleAvatarChange = async (publicUrl: string) => {
+    if (!user) return;
     
-    const file = e.target.files[0];
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user?.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-    const filePath = `avatars/${fileName}`;
-    
-    setUploading(true);
     try {
-      // First upload to storage
-      const { error: uploadError } = await supabase.storage
-        .from('user-avatars')
-        .upload(filePath, file);
-        
-      if (uploadError) throw uploadError;
-      
-      // Get public URL
-      const { data: urlData } = await supabase.storage
-        .from('user-avatars')
-        .getPublicUrl(filePath);
-        
-      const publicUrl = urlData.publicUrl;
-      
       // Update user profile with new avatar URL
-      const { error: updateError } = await supabase
+      const { error } = await supabase
         .from('profiles')
         .update({ 
           avatar_url: publicUrl,
-          first_name: formData.firstName,
-          last_name: formData.lastName,
           updated_at: new Date().toISOString()
         })
-        .eq('id', user?.id);
+        .eq('id', user.id);
         
-      if (updateError) throw updateError;
+      if (error) throw error;
       
-      toast.success('Profile updated successfully');
-      fetchProfile();
+      setProfileData(prev => prev ? {...prev, avatar_url: publicUrl} : null);
+      toast.success('Profile photo updated successfully');
     } catch (error) {
-      console.error('Error uploading avatar:', error);
-      toast.error('Failed to upload avatar');
-    } finally {
-      setUploading(false);
+      console.error('Error updating avatar:', error);
+      toast.error('Failed to update profile photo');
     }
   };
   
@@ -192,97 +165,20 @@ const UserProfile = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-col md:flex-row gap-8">
-                    <div className="flex flex-col items-center space-y-4">
-                      <div className="relative">
-                        <Avatar className="h-32 w-32">
-                          {profileData?.avatar_url ? (
-                            <AvatarImage src={profileData.avatar_url} />
-                          ) : (
-                            <AvatarFallback className="bg-wedding-sage text-white text-3xl">
-                              {formData.firstName?.[0]}{formData.lastName?.[0]}
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
-                        <div className="absolute bottom-0 right-0">
-                          <Label 
-                            htmlFor="avatar-upload"
-                            className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white rounded-full p-2 cursor-pointer"
-                          >
-                            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-                          </Label>
-                          <Input 
-                            id="avatar-upload"
-                            type="file" 
-                            accept="image/*" 
-                            onChange={handleAvatarChange}
-                            className="hidden"
-                            disabled={uploading}
-                          />
-                        </div>
-                      </div>
-                      <p className="text-gray-600 text-center text-sm">
-                        Click the camera icon to upload a profile photo
-                      </p>
-                    </div>
+                    <ProfileAvatar 
+                      avatar_url={profileData?.avatar_url || null}
+                      firstName={formData.firstName}
+                      lastName={formData.lastName}
+                      userId={user?.id || ''}
+                      onAvatarChange={handleAvatarChange}
+                    />
                     
-                    <form onSubmit={handleSubmit} className="flex-1 space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="firstName">First Name</Label>
-                          <Input
-                            id="firstName"
-                            name="firstName"
-                            value={formData.firstName}
-                            onChange={handleChange}
-                            placeholder="First Name"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="lastName">Last Name</Label>
-                          <Input
-                            id="lastName"
-                            name="lastName"
-                            value={formData.lastName}
-                            onChange={handleChange}
-                            placeholder="Last Name"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          value={formData.email}
-                          readOnly
-                          className="bg-gray-100"
-                          placeholder="Email"
-                        />
-                        <p className="text-xs text-gray-500">Email cannot be changed</p>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Phone Number</Label>
-                        <Input
-                          id="phone"
-                          name="phone"
-                          value={formData.phone}
-                          onChange={handleChange}
-                          placeholder="Phone Number"
-                        />
-                      </div>
-                      
-                      <Button 
-                        type="submit" 
-                        className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold"
-                        disabled={updating}
-                      >
-                        {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Save Changes
-                      </Button>
-                    </form>
+                    <ProfileForm
+                      formData={formData}
+                      updating={updating}
+                      onChange={handleChange}
+                      onSubmit={handleSubmit}
+                    />
                   </div>
                 </CardContent>
               </Card>
