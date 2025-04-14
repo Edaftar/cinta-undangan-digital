@@ -1,0 +1,156 @@
+
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
+
+interface UserPreferencesProps {
+  className?: string;
+}
+
+interface Preferences {
+  emailNotifications: boolean;
+  darkMode: boolean;
+  language: string;
+}
+
+const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
+  const { user } = useAuth();
+  const [preferences, setPreferences] = useState<Preferences>({
+    emailNotifications: true,
+    darkMode: false,
+    language: 'en',
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  
+  useEffect(() => {
+    if (user) {
+      fetchUserPreferences();
+    }
+  }, [user]);
+  
+  const fetchUserPreferences = async () => {
+    try {
+      setLoading(true);
+      // For now, we're just simulating fetching preferences
+      // In the future, these would be stored in a preferences table
+      
+      // Simulate API delay
+      setTimeout(() => {
+        setPreferences({
+          emailNotifications: true,
+          darkMode: false,
+          language: 'en',
+        });
+        setLoading(false);
+      }, 500);
+    } catch (error) {
+      console.error('Error fetching preferences:', error);
+      toast.error('Failed to load preferences');
+      setLoading(false);
+    }
+  };
+  
+  const handlePreferenceChange = (name: keyof Preferences, value: any) => {
+    setPreferences(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleSavePreferences = async () => {
+    if (!user) return;
+    
+    setSaving(true);
+    try {
+      // For now, just simulate saving preferences
+      // In the future, these would be stored in a preferences table
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast.success('Preferences updated successfully');
+    } catch (error) {
+      console.error('Error saving preferences:', error);
+      toast.error('Failed to save preferences');
+    } finally {
+      setSaving(false);
+    }
+  };
+  
+  if (loading) {
+    return (
+      <Card className={className}>
+        <CardContent className="flex justify-center items-center py-6">
+          <Loader2 className="h-8 w-8 animate-spin text-wedding-rosegold" />
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  return (
+    <Card className={className}>
+      <CardHeader>
+        <CardTitle className="text-xl">Preferences</CardTitle>
+        <CardDescription>
+          Customize your account preferences and settings
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="emailNotifications" className="flex-1">
+              <div>Email Notifications</div>
+              <p className="text-sm text-gray-500">Receive updates about your invitations and RSVPs</p>
+            </Label>
+            <Switch
+              id="emailNotifications"
+              checked={preferences.emailNotifications}
+              onCheckedChange={(checked) => handlePreferenceChange('emailNotifications', checked)}
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Label htmlFor="darkMode" className="flex-1">
+              <div>Dark Mode</div>
+              <p className="text-sm text-gray-500">Use dark theme throughout the application</p>
+            </Label>
+            <Switch
+              id="darkMode"
+              checked={preferences.darkMode}
+              onCheckedChange={(checked) => handlePreferenceChange('darkMode', checked)}
+            />
+          </div>
+          
+          <div className="space-y-1">
+            <Label htmlFor="language">Language</Label>
+            <select 
+              id="language"
+              className="w-full rounded-md border border-gray-300 p-2"
+              value={preferences.language}
+              onChange={(e) => handlePreferenceChange('language', e.target.value)}
+            >
+              <option value="en">English</option>
+              <option value="id">Indonesian</option>
+              <option value="es">Spanish</option>
+            </select>
+          </div>
+        </div>
+        
+        <Button 
+          onClick={handleSavePreferences}
+          className="w-full bg-wedding-rosegold hover:bg-wedding-deep-rosegold"
+          disabled={saving}
+        >
+          {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          Save Preferences
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default UserPreferences;

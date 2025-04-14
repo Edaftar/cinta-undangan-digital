@@ -12,6 +12,8 @@ import { Loader2, Camera } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import UserPreferences from "@/components/UserPreferences";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ProfileData {
   id: string;
@@ -136,11 +138,9 @@ const UserProfile = () => {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
-          // We're using the proper field name for the profiles table
+          avatar_url: publicUrl,
           first_name: formData.firstName,
           last_name: formData.lastName,
-          // This is where we store the avatar_url in our custom metadata field for the profile
-          // We need to ensure this field exists in the profiles table
           updated_at: new Date().toISOString()
         })
         .eq('id', user?.id);
@@ -174,109 +174,124 @@ const UserProfile = () => {
       <Navbar />
       <main className="flex-grow py-12">
         <div className="container max-w-4xl mx-auto px-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold">My Profile</CardTitle>
-              <CardDescription>
-                Update your personal information and preferences
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col md:flex-row gap-8">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="relative">
-                    <Avatar className="h-32 w-32">
-                      {profileData?.avatar_url ? (
-                        <AvatarImage src={profileData.avatar_url} />
-                      ) : (
-                        <AvatarFallback className="bg-wedding-sage text-white text-3xl">
-                          {formData.firstName?.[0]}{formData.lastName?.[0]}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    <div className="absolute bottom-0 right-0">
-                      <Label 
-                        htmlFor="avatar-upload"
-                        className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white rounded-full p-2 cursor-pointer"
+          <h1 className="text-3xl font-bold mb-6">My Account</h1>
+          
+          <Tabs defaultValue="profile" className="mb-8">
+            <TabsList className="mb-6">
+              <TabsTrigger value="profile">Profile</TabsTrigger>
+              <TabsTrigger value="preferences">Preferences</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="profile">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold">My Profile</CardTitle>
+                  <CardDescription>
+                    Update your personal information
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col md:flex-row gap-8">
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="relative">
+                        <Avatar className="h-32 w-32">
+                          {profileData?.avatar_url ? (
+                            <AvatarImage src={profileData.avatar_url} />
+                          ) : (
+                            <AvatarFallback className="bg-wedding-sage text-white text-3xl">
+                              {formData.firstName?.[0]}{formData.lastName?.[0]}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        <div className="absolute bottom-0 right-0">
+                          <Label 
+                            htmlFor="avatar-upload"
+                            className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white rounded-full p-2 cursor-pointer"
+                          >
+                            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                          </Label>
+                          <Input 
+                            id="avatar-upload"
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handleAvatarChange}
+                            className="hidden"
+                            disabled={uploading}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-gray-600 text-center text-sm">
+                        Click the camera icon to upload a profile photo
+                      </p>
+                    </div>
+                    
+                    <form onSubmit={handleSubmit} className="flex-1 space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="firstName">First Name</Label>
+                          <Input
+                            id="firstName"
+                            name="firstName"
+                            value={formData.firstName}
+                            onChange={handleChange}
+                            placeholder="First Name"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="lastName">Last Name</Label>
+                          <Input
+                            id="lastName"
+                            name="lastName"
+                            value={formData.lastName}
+                            onChange={handleChange}
+                            placeholder="Last Name"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          name="email"
+                          type="email"
+                          value={formData.email}
+                          readOnly
+                          className="bg-gray-100"
+                          placeholder="Email"
+                        />
+                        <p className="text-xs text-gray-500">Email cannot be changed</p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">Phone Number</Label>
+                        <Input
+                          id="phone"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleChange}
+                          placeholder="Phone Number"
+                        />
+                      </div>
+                      
+                      <Button 
+                        type="submit" 
+                        className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold"
+                        disabled={updating}
                       >
-                        {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-                      </Label>
-                      <Input 
-                        id="avatar-upload"
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handleAvatarChange}
-                        className="hidden"
-                        disabled={uploading}
-                      />
-                    </div>
+                        {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Save Changes
+                      </Button>
+                    </form>
                   </div>
-                  <p className="text-gray-600 text-center text-sm">
-                    Click the camera icon to upload a profile photo
-                  </p>
-                </div>
-                
-                <form onSubmit={handleSubmit} className="flex-1 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input
-                        id="firstName"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleChange}
-                        placeholder="First Name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input
-                        id="lastName"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleChange}
-                        placeholder="Last Name"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      readOnly
-                      className="bg-gray-100"
-                      placeholder="Email"
-                    />
-                    <p className="text-xs text-gray-500">Email cannot be changed</p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder="Phone Number"
-                    />
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold"
-                    disabled={updating}
-                  >
-                    {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Save Changes
-                  </Button>
-                </form>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="preferences">
+              <UserPreferences />
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
       <Footer />
