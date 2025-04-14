@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -35,7 +34,7 @@ import {
 } from '@/components/ui/select';
 import { templates } from '@/data/templates';
 import { formatDistance } from 'date-fns';
-import { Loader2, PlusCircle, Copy, BarChart2, Edit, EyeIcon, Share2, Toggle, User } from 'lucide-react';
+import { Loader2, PlusCircle, Copy, BarChart2, Edit, EyeIcon, Share2, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -399,7 +398,6 @@ const Dashboard = () => {
                             className={!invitation.active ? "bg-green-500 hover:bg-green-600 flex-1" : "flex-1"}
                             onClick={() => toggleInvitationStatus(invitation.id, invitation.active)}
                           >
-                            <Toggle className="h-4 w-4 mr-1" />
                             {invitation.active ? "Deactivate" : "Activate"}
                           </Button>
                         </CardFooter>
@@ -445,7 +443,10 @@ const Dashboard = () => {
                     </Button>
                   </div>
                   
-                  <GuestList invitationId={currentInvitation.id} />
+                  <GuestList 
+                    invitationId={currentInvitation.id} 
+                    invitationTitle={currentInvitation.title}
+                  />
                 </>
               )}
             </TabsContent>

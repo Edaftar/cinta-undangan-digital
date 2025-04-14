@@ -38,18 +38,28 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
   const fetchUserPreferences = async () => {
     try {
       setLoading(true);
-      // For now, we're just simulating fetching preferences
-      // In the future, these would be stored in a preferences table
       
-      // Simulate API delay
-      setTimeout(() => {
+      // Fetch preferences from the database
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('email_notifications, dark_mode, language')
+        .eq('id', user?.id)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 means no rows returned, which is fine for new users
+        throw error;
+      }
+      
+      if (data) {
         setPreferences({
-          emailNotifications: true,
-          darkMode: false,
-          language: 'en',
+          emailNotifications: data.email_notifications ?? true,
+          darkMode: data.dark_mode ?? false,
+          language: data.language ?? 'en',
         });
-        setLoading(false);
-      }, 500);
+      }
+      
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching preferences:', error);
       toast.error('Failed to load preferences');
@@ -66,11 +76,18 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
     
     setSaving(true);
     try {
-      // For now, just simulate saving preferences
-      // In the future, these would be stored in a preferences table
+      // Save preferences to the database
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          email_notifications: preferences.emailNotifications,
+          dark_mode: preferences.darkMode,
+          language: preferences.language,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (error) throw error;
       
       toast.success('Preferences updated successfully');
     } catch (error) {
