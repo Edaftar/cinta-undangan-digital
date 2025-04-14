@@ -8,6 +8,13 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface UserPreferencesProps {
   className?: string;
@@ -57,6 +64,7 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
       }
       
       if (data) {
+        // Use optional chaining and default values to handle potentially missing properties
         setPreferences({
           emailNotifications: data.email_notifications ?? true,
           darkMode: data.dark_mode ?? false,
@@ -147,18 +155,21 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
             />
           </div>
           
-          <div className="space-y-1">
+          <div className="space-y-2">
             <Label htmlFor="language">Language</Label>
-            <select 
-              id="language"
-              className="w-full rounded-md border border-gray-300 p-2"
+            <Select
               value={preferences.language}
-              onChange={(e) => handlePreferenceChange('language', e.target.value)}
+              onValueChange={(value) => handlePreferenceChange('language', value)}
             >
-              <option value="en">English</option>
-              <option value="id">Indonesian</option>
-              <option value="es">Spanish</option>
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="id">Indonesian</SelectItem>
+                <SelectItem value="es">Spanish</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
         
