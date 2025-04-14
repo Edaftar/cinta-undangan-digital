@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -321,94 +322,5 @@ const Dashboard = () => {
     </div>
   );
 };
-
-const handleCreateInvitation = async () => {
-    if (!user) return;
-
-    setIsSubmitting(true);
-    try {
-      // Generate a random slug if it's empty
-      const finalSlug = slug || generateRandomString(8);
-
-      // Include all required fields based on the Supabase schema
-      const { data, error } = await supabase
-        .from('invitations')
-        .insert({
-          user_id: user.id, 
-          title, 
-          slug: finalSlug,
-          template_id: templateId,
-          active: true,
-          bride_name: "Bride Name", // Default value for required field
-          groom_name: "Groom Name", // Default value for required field
-          location: "Wedding Location", // Default value for required field
-          main_date: new Date().toISOString(), // Default value for required field
-        });
-
-      if (error) throw error;
-
-      // Optimistically update the invitations list
-      const newInvitation: Invitation = {
-        id: generateRandomString(10), // Use a temporary ID since data might be null
-        user_id: user.id, 
-        title, 
-        slug: finalSlug,
-        template_id: templateId,
-        active: true,
-        bride_name: "Bride Name",
-        groom_name: "Groom Name",
-        location: "Wedding Location",
-        main_date: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-      };
-      
-      setInvitations(prevInvitations => [newInvitation, ...prevInvitations]);
-
-      toast.success("Invitation created successfully!");
-      setOpen(false); // Close the dialog
-      setTitle(''); // Reset the title
-      setSlug(''); // Reset the slug
-    } catch (error: any) {
-      console.error("Error creating invitation:", error);
-      toast.error("Failed to create invitation.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleCopyToClipboard = (slug: string) => {
-    const invitationLink = `${window.location.origin}/invitation/${slug}`;
-    navigator.clipboard.writeText(invitationLink)
-      .then(() => {
-        toast.success("Link copied to clipboard!");
-      })
-      .catch(err => {
-        console.error("Could not copy text: ", err);
-        toast.error("Failed to copy link to clipboard.");
-      });
-  };
-
-  const toggleInvitationStatus = async (id: string, currentStatus: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('invitations')
-        .update({ active: !currentStatus })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      // Optimistically update the invitations list
-      setInvitations(prevInvitations =>
-        prevInvitations.map(invitation =>
-          invitation.id === id ? { ...invitation, active: !currentStatus } : invitation
-        )
-      );
-
-      toast.success(`Invitation ${!currentStatus ? 'activated' : 'deactivated'}!`);
-    } catch (error: any) {
-      console.error("Error updating invitation status:", error);
-      toast.error("Failed to update invitation status.");
-    }
-  };
 
 export default Dashboard;

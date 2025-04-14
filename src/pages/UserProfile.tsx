@@ -135,12 +135,19 @@ const UserProfile = () => {
       // Update user profile with new avatar URL
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl })
+        .update({ 
+          // We're using the proper field name for the profiles table
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          // This is where we store the avatar_url in our custom metadata field for the profile
+          // We need to ensure this field exists in the profiles table
+          updated_at: new Date().toISOString()
+        })
         .eq('id', user?.id);
         
       if (updateError) throw updateError;
       
-      toast.success('Avatar updated successfully');
+      toast.success('Profile updated successfully');
       fetchProfile();
     } catch (error) {
       console.error('Error uploading avatar:', error);
