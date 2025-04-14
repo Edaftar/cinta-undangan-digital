@@ -20,6 +20,7 @@ import Dashboard from "./pages/Dashboard";
 import About from "./pages/About";
 import Pricing from "./pages/Pricing";
 import AdminPanel from "./pages/AdminPanel";
+import UserProfile from "./pages/UserProfile";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,11 @@ const App = () => (
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/auth/login" element={<Login />} />
               <Route path="/auth/signup" element={<Signup />} />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <UserProfile />
+                </ProtectedRoute>
+              } />
               <Route path="/create/:templateId" element={
                 <ProtectedRoute>
                   <CreateTemplate />

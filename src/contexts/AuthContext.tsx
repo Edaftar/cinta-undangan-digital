@@ -30,19 +30,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const checkAdminStatus = async (userId: string) => {
     try {
       setCheckingAdmin(true);
-      const { data, error } = await supabase
-        .from('roles')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('role', 'admin')
-        .single();
-          
-      if (data && !error) {
-        console.log("User is admin:", data);
-        setIsAdmin(true);
-      } else {
-        console.log("User is not admin or error:", error);
+      
+      // Call the is_admin function instead of querying roles table
+      const { data, error } = await supabase.rpc('is_admin');
+      
+      if (error) {
+        console.error("Error checking admin status:", error);
         setIsAdmin(false);
+      } else {
+        console.log("Admin check result:", data);
+        setIsAdmin(!!data); // Convert to boolean
       }
       
       setCheckingAdmin(false);
@@ -70,8 +67,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         // Redirect admin users to admin panel after login
-        if (session?.user && isAdmin && event === 'SIGNED_IN') {
-          navigate('/admin');
+        if (session?.user && event === 'SIGNED_IN') {
+          // We'll check if admin and redirect in a setTimeout to avoid deadlocks
+          setTimeout(() => {
+            if (isAdmin) {
+              navigate('/admin');
+            } else {
+              navigate('/dashboard');
+            }
+          }, 100);
         }
         
         setIsLoading(false);
