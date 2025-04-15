@@ -39,7 +39,7 @@ const Navbar: React.FC = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
             <span className="text-2xl font-playfair font-bold text-wedding-sage">
-              Untuk<span className="text-wedding-rosegold">SelamaNya</span>
+              Swift<span className="text-wedding-rosegold">Vite</span>
             </span>
           </Link>
 

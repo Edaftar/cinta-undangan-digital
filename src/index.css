@@ -54,7 +54,6 @@
   }
 
   body {
-    /* Font family configuration */
     @apply bg-background text-foreground font-montserrat;
   }
   

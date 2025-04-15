@@ -4,14 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Button } from '@/components/ui/button';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, Camera } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import UserPreferences from "@/components/UserPreferences";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ProfileAvatar from '@/components/profile/ProfileAvatar';
-import ProfileForm from '@/components/profile/ProfileForm';
 
 interface ProfileData {
   id: string;
@@ -26,8 +26,8 @@ const UserProfile = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -37,30 +37,17 @@ const UserProfile = () => {
   });
   
   useEffect(() => {
-    // Add a timeout to prevent infinite loading
-    const timeoutId = setTimeout(() => {
-      if (loading) {
-        setError("Loading is taking longer than expected. Please refresh the page.");
-      }
-    }, 10000);
-
     if (!user) {
       navigate('/auth/login');
-      clearTimeout(timeoutId);
       return;
     }
     
     fetchProfile();
-    
-    return () => clearTimeout(timeoutId);
   }, [user, navigate]);
   
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      setError(null);
-      
-      console.log("Fetching profile for user:", user?.id);
       
       const { data, error } = await supabase
         .from('profiles')
@@ -68,14 +55,7 @@ const UserProfile = () => {
         .eq('id', user?.id)
         .single();
       
-      if (error) {
-        console.error('Error fetching profile:', error);
-        setError("Failed to load profile: " + error.message);
-        toast.error('Failed to load profile');
-        return;
-      }
-      
-      console.log("Profile data received:", data);
+      if (error) throw error;
       
       if (data) {
         setProfileData(data);
@@ -85,12 +65,9 @@ const UserProfile = () => {
           email: data.email || '',
           phone: data.phone || ''
         });
-      } else {
-        setError("No profile data found");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching profile:', error);
-      setError("Failed to load profile: " + error.message);
       toast.error('Failed to load profile');
     } finally {
       setLoading(false);
@@ -123,7 +100,7 @@ const UserProfile = () => {
       
       toast.success('Profile updated successfully');
       fetchProfile();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
     } finally {
@@ -131,32 +108,53 @@ const UserProfile = () => {
     }
   };
   
-  const handleAvatarChange = async (publicUrl: string) => {
-    if (!user) return;
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) return;
     
+    const file = e.target.files[0];
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user?.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `avatars/${fileName}`;
+    
+    setUploading(true);
     try {
+      // First upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from('user-avatars')
+        .upload(filePath, file);
+        
+      if (uploadError) throw uploadError;
+      
+      // Get public URL
+      const { data: urlData } = await supabase.storage
+        .from('user-avatars')
+        .getPublicUrl(filePath);
+        
+      const publicUrl = urlData.publicUrl;
+      
       // Update user profile with new avatar URL
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
-          avatar_url: publicUrl,
+          // We're using the proper field name for the profiles table
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          // This is where we store the avatar_url in our custom metadata field for the profile
+          // We need to ensure this field exists in the profiles table
           updated_at: new Date().toISOString()
         })
-        .eq('id', user.id);
+        .eq('id', user?.id);
         
-      if (error) throw error;
+      if (updateError) throw updateError;
       
-      setProfileData(prev => prev ? {...prev, avatar_url: publicUrl} : null);
-      toast.success('Profile photo updated successfully');
-    } catch (error: any) {
-      console.error('Error updating avatar:', error);
-      toast.error('Failed to update profile photo');
+      toast.success('Profile updated successfully');
+      fetchProfile();
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast.error('Failed to upload avatar');
+    } finally {
+      setUploading(false);
     }
-  };
-  
-  const handleRetry = () => {
-    setError(null);
-    fetchProfile();
   };
   
   if (loading) {
@@ -164,37 +162,7 @@ const UserProfile = () => {
       <div className="min-h-screen flex flex-col bg-wedding-ivory">
         <Navbar />
         <main className="flex-grow flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-wedding-rosegold mx-auto mb-4" />
-            <p className="text-wedding-text">Loading your profile...</p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-  
-  if (error) {
-    return (
-      <div className="min-h-screen flex flex-col bg-wedding-ivory">
-        <Navbar />
-        <main className="flex-grow flex items-center justify-center">
-          <Card className="w-full max-w-md mx-auto">
-            <CardHeader>
-              <CardTitle className="text-xl text-red-500">Error Loading Profile</CardTitle>
-              <CardDescription>
-                {error}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <button 
-                onClick={handleRetry}
-                className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white font-medium py-2 px-4 rounded-lg w-full"
-              >
-                Try Again
-              </button>
-            </CardContent>
-          </Card>
+          <Loader2 className="h-12 w-12 animate-spin text-wedding-rosegold" />
         </main>
         <Footer />
       </div>
@@ -206,47 +174,109 @@ const UserProfile = () => {
       <Navbar />
       <main className="flex-grow py-12">
         <div className="container max-w-4xl mx-auto px-4">
-          <h1 className="text-3xl font-bold mb-6">My Account</h1>
-          
-          <Tabs defaultValue="profile" className="mb-8">
-            <TabsList className="mb-6">
-              <TabsTrigger value="profile">Profile</TabsTrigger>
-              <TabsTrigger value="preferences">Preferences</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="profile">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-2xl font-bold">My Profile</CardTitle>
-                  <CardDescription>
-                    Update your personal information
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col md:flex-row gap-8">
-                    <ProfileAvatar 
-                      avatar_url={profileData?.avatar_url || null}
-                      firstName={formData.firstName}
-                      lastName={formData.lastName}
-                      userId={user?.id || ''}
-                      onAvatarChange={handleAvatarChange}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold">My Profile</CardTitle>
+              <CardDescription>
+                Update your personal information and preferences
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row gap-8">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="relative">
+                    <Avatar className="h-32 w-32">
+                      {profileData?.avatar_url ? (
+                        <AvatarImage src={profileData.avatar_url} />
+                      ) : (
+                        <AvatarFallback className="bg-wedding-sage text-white text-3xl">
+                          {formData.firstName?.[0]}{formData.lastName?.[0]}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="absolute bottom-0 right-0">
+                      <Label 
+                        htmlFor="avatar-upload"
+                        className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white rounded-full p-2 cursor-pointer"
+                      >
+                        {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                      </Label>
+                      <Input 
+                        id="avatar-upload"
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleAvatarChange}
+                        className="hidden"
+                        disabled={uploading}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-gray-600 text-center text-sm">
+                    Click the camera icon to upload a profile photo
+                  </p>
+                </div>
+                
+                <form onSubmit={handleSubmit} className="flex-1 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input
+                        id="firstName"
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleChange}
+                        placeholder="First Name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleChange}
+                        placeholder="Last Name"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      readOnly
+                      className="bg-gray-100"
+                      placeholder="Email"
                     />
-                    
-                    <ProfileForm
-                      formData={formData}
-                      updating={updating}
+                    <p className="text-xs text-gray-500">Email cannot be changed</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
                       onChange={handleChange}
-                      onSubmit={handleSubmit}
+                      placeholder="Phone Number"
                     />
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="preferences">
-              <UserPreferences />
-            </TabsContent>
-          </Tabs>
+                  
+                  <Button 
+                    type="submit" 
+                    className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold"
+                    disabled={updating}
+                  >
+                    {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Save Changes
+                  </Button>
+                </form>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </main>
       <Footer />
