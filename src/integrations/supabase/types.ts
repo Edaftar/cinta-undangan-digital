@@ -182,9 +182,12 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          dark_mode: boolean | null
           email: string | null
+          email_notifications: boolean | null
           first_name: string | null
           id: string
+          language: string | null
           last_name: string | null
           phone: string | null
           updated_at: string
@@ -192,9 +195,12 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          dark_mode?: boolean | null
           email?: string | null
+          email_notifications?: boolean | null
           first_name?: string | null
           id: string
+          language?: string | null
           last_name?: string | null
           phone?: string | null
           updated_at?: string
@@ -202,9 +208,12 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          dark_mode?: boolean | null
           email?: string | null
+          email_notifications?: boolean | null
           first_name?: string | null
           id?: string
+          language?: string | null
           last_name?: string | null
           phone?: string | null
           updated_at?: string

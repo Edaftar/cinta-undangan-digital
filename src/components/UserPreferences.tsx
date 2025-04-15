@@ -117,7 +117,7 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
     setSaving(true);
     try {
       // Try to update with the full set of preferences
-      let { error } = await supabase
+      const { error } = await supabase
         .from('profiles')
         .update({
           email_notifications: preferences.emailNotifications,
@@ -128,27 +128,11 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
         .eq('id', user.id);
       
       if (error) {
-        console.error('Full update failed:', error);
-        
-        // If failed, try updating only the dark_mode preference
-        const { error: darkModeError } = await supabase
-          .from('profiles')
-          .update({
-            dark_mode: preferences.darkMode,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', user.id);
-          
-        if (darkModeError) {
-          console.error('Dark mode update failed too:', darkModeError);
-          throw darkModeError;
-        }
-        
-        toast.success('Theme preference updated successfully');
-        toast.warning('Some preferences could not be saved. Database columns might be missing.');
-      } else {
-        toast.success('Preferences updated successfully');
+        console.error('Error saving preferences:', error);
+        throw error;
       }
+      
+      toast.success('Preferences updated successfully');
     } catch (error) {
       console.error('Error saving preferences:', error);
       toast.error('Failed to save preferences');
