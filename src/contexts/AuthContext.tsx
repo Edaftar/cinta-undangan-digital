@@ -37,6 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (error) {
         console.error("Error checking admin status:", error);
+        toast.error("Admin check failed: " + error.message);
         setIsAdmin(false);
       } else {
         console.log("Admin check result:", data);
@@ -49,8 +50,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
       setCheckingAdmin(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error checking admin role:", error);
+      toast.error("Admin check failed: " + error.message);
       setIsAdmin(false);
       setCheckingAdmin(false);
     }
@@ -130,7 +132,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     try {
       setIsLoading(true);
-      const { error, data } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {

@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,9 +44,10 @@ interface ProfileData {
 
 const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [preferences, setPreferences] = useState<Preferences>({
     emailNotifications: true,
-    darkMode: false,
+    darkMode: theme === 'dark',
     language: 'en',
   });
   const [loading, setLoading] = useState(true);
@@ -96,7 +98,16 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
   };
   
   const handlePreferenceChange = (name: keyof Preferences, value: any) => {
-    setPreferences(prev => ({ ...prev, [name]: value }));
+    setPreferences(prev => {
+      // If changing dark mode, also toggle the theme context
+      if (name === 'darkMode' && prev.darkMode !== value) {
+        // Use setTimeout to avoid state update during render
+        setTimeout(() => {
+          toggleTheme();
+        }, 0);
+      }
+      return { ...prev, [name]: value };
+    });
   };
   
   const handleSavePreferences = async () => {
@@ -149,7 +160,7 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
           <div className="flex items-center justify-between">
             <Label htmlFor="emailNotifications" className="flex-1">
               <div>Email Notifications</div>
-              <p className="text-sm text-gray-500">Receive updates about your invitations and RSVPs</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Receive updates about your invitations and RSVPs</p>
             </Label>
             <Switch
               id="emailNotifications"
@@ -161,7 +172,7 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
           <div className="flex items-center justify-between">
             <Label htmlFor="darkMode" className="flex-1">
               <div>Dark Mode</div>
-              <p className="text-sm text-gray-500">Use dark theme throughout the application</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Use dark theme throughout the application</p>
             </Label>
             <Switch
               id="darkMode"
