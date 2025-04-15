@@ -1,76 +1,87 @@
 
-export interface Template {
-  id: string;
-  name: string;
-  description: string;
-  image: string;
-  category: TemplateCategory;
-  features: string[];
-  popular?: boolean;
-}
-
-export type TemplateCategory = 'elegant' | 'minimalist' | 'rustic' | 'traditional' | 'modern' | 'islamic';
-
-export const templates: Template[] = [
+export const templates = [
   {
-    id: 'elegant-1',
-    name: 'Elegant Rose',
-    description: 'A beautiful and elegant template with floral elements and soft colors.',
-    image: 'https://qacrvdqrdymlxdfcubgk.supabase.co/storage/v1/object/public/wedding_photos/elegant-rose-template.jpg',
-    category: 'elegant',
-    features: ['Photo gallery', 'RSVP form', 'Love story timeline', 'Digital envelope'],
-    popular: true,
+    id: "elegant-1",
+    name: "Elegant Rose",
+    description: "Template elegan dengan warna rose gold dan sentuhan ornamen floral yang indah.",
+    image: "/template-previews/elegant-rose-preview.jpg",
+    features: [
+      "Animasi transisi halus",
+      "Fitur RSVP lengkap",
+      "Galeri foto",
+      "Cerita cinta",
+      "Lokasi peta"
+    ],
+    category: "premium"
   },
   {
-    id: 'minimalist-1',
-    name: 'Minimalist White',
-    description: 'Clean and simple design with minimalist aesthetics.',
-    image: 'https://qacrvdqrdymlxdfcubgk.supabase.co/storage/v1/object/public/wedding_photos/minimalist-template.jpg',
-    category: 'minimalist',
-    features: ['Photo gallery', 'RSVP form', 'Guest comments', 'Countdown timer'],
+    id: "minimalist-1",
+    name: "Minimalist White",
+    description: "Template minimalis dengan latar putih bersih dan tipografi modern.",
+    image: "/template-previews/minimalist-preview.jpg",
+    features: [
+      "Desain sederhana",
+      "Loading cepat",
+      "Mobile-friendly",
+      "Hitung mundur",
+      "Lokasi peta"
+    ],
+    category: "standard"
   },
   {
-    id: 'rustic-1',
-    name: 'Rustic Garden',
-    description: 'Warm and natural design with rustic elements and earthy colors.',
-    image: 'https://qacrvdqrdymlxdfcubgk.supabase.co/storage/v1/object/public/wedding_photos/rustic-template.jpg',
-    category: 'rustic',
-    features: ['Photo gallery', 'RSVP form', 'Love story timeline', 'Location map'],
-    popular: true,
+    id: "rustic-1",
+    name: "Rustic Charm",
+    description: "Template dengan tema rustic yang hangat dengan elemen kayu dan alam.",
+    image: "/template-previews/rustic-preview.jpg",
+    features: [
+      "Efek parallax",
+      "Galeri foto",
+      "Hitung mundur",
+      "Lokasi peta",
+      "RSVP online"
+    ],
+    category: "premium"
   },
   {
-    id: 'traditional-1',
-    name: 'Traditional Java',
-    description: 'Traditional Indonesian wedding theme with Javanese cultural elements.',
-    image: 'https://qacrvdqrdymlxdfcubgk.supabase.co/storage/v1/object/public/wedding_photos/traditional-template.jpg',
-    category: 'traditional',
-    features: ['Photo gallery', 'RSVP form', 'Cultural ceremony details', 'Digital envelope'],
+    id: "modern-1",
+    name: "Modern Geometry",
+    description: "Template modern dengan pola geometris dan warna kontemporer.",
+    image: "/template-previews/modern-preview.jpg",
+    features: [
+      "Animasi SVG",
+      "Fully responsive",
+      "Hitung mundur",
+      "Galeri masonry",
+      "RSVP digital"
+    ],
+    category: "premium"
   },
   {
-    id: 'modern-1',
-    name: 'Modern Geometry',
-    description: 'Contemporary design with geometric patterns and bold typography.',
-    image: 'https://qacrvdqrdymlxdfcubgk.supabase.co/storage/v1/object/public/wedding_photos/modern-template.jpg',
-    category: 'modern',
-    features: ['Photo gallery', 'RSVP form', 'Guest comments', 'Countdown timer'],
-    popular: true,
+    id: "jawa-1",
+    name: "Javanese Traditional",
+    description: "Template dengan tema pernikahan tradisional Jawa yang elegan.",
+    image: "/template-previews/javanese-preview.jpg",
+    features: [
+      "Ornamen batik",
+      "Dual language",
+      "Kalender Jawa",
+      "Galeri foto",
+      "RSVP online"
+    ],
+    category: "premium"
   },
   {
-    id: 'islamic-1',
-    name: 'Islamic Ornament',
-    description: 'Elegant Islamic design with traditional patterns and calligraphy.',
-    image: 'https://qacrvdqrdymlxdfcubgk.supabase.co/storage/v1/object/public/wedding_photos/islamic-template.jpg',
-    category: 'islamic',
-    features: ['Photo gallery', 'RSVP form', 'Islamic quotes', 'Prayer times'],
-  },
-];
-
-export const categories = [
-  { id: 'all', name: 'All Templates' },
-  { id: 'elegant', name: 'Elegant' },
-  { id: 'minimalist', name: 'Minimalist' },
-  { id: 'rustic', name: 'Rustic' },
-  { id: 'traditional', name: 'Traditional' },
-  { id: 'modern', name: 'Modern' },
-  { id: 'islamic', name: 'Islamic' },
+    id: "islamic-1",
+    name: "Islamic Ornament",
+    description: "Template dengan tema Islami yang mewah dengan ornamen geometris khas.",
+    image: "/template-previews/islamic-preview.jpg",
+    features: [
+      "Kaligrafi Islami",
+      "Ornamen geometris",
+      "Ayat suci",
+      "Lokasi masjid",
+      "RSVP digital"
+    ],
+    category: "premium"
+  }
 ];

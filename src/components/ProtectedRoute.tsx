@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,6 +12,13 @@ interface ProtectedRouteProps {
 export const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRouteProps) => {
   const { user, isLoading, isAdmin, checkingAdmin } = useAuth();
   const location = useLocation();
+
+  useEffect(() => {
+    // Show toast if user is trying to access admin-only route but is not admin
+    if (adminOnly && user && !isAdmin && !checkingAdmin) {
+      toast.error("Anda tidak memiliki akses ke halaman ini");
+    }
+  }, [adminOnly, user, isAdmin, checkingAdmin]);
 
   // Show loading state while checking authentication or admin status
   if (isLoading || (adminOnly && checkingAdmin)) {

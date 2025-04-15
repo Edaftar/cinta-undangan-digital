@@ -64,6 +64,24 @@
   .cursive {
     @apply font-dancing;
   }
+
+  /* Fix for date picker visibility */
+  .rdp {
+    --rdp-accent-color: #D8A7B1 !important;
+    --rdp-background-color: #F8E8EA !important;
+  }
+  
+  .rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
+    background-color: #F8E8EA !important;
+    color: #4A4A4A !important;
+  }
+  
+  .rdp-day_selected, 
+  .rdp-day_selected:hover,
+  .rdp-day_selected:focus {
+    background-color: #D8A7B1 !important;
+    color: white !important;
+  }
 }
 
 @layer components {
@@ -77,5 +95,26 @@
   
   .card-hover {
     @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+
+  /* Settings page styling improvements */
+  .settings-panel {
+    @apply bg-white rounded-lg shadow-sm p-6;
+  }
+  
+  .settings-heading {
+    @apply text-xl font-semibold mb-4 text-gray-700;
+  }
+  
+  .settings-form-group {
+    @apply grid gap-2 mb-4;
+  }
+  
+  .settings-label {
+    @apply font-medium text-gray-700;
+  }
+  
+  .settings-input {
+    @apply border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-wedding-rosegold;
   }
 }

@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -25,13 +25,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Function to check if user is admin
   const checkAdminStatus = async (userId: string) => {
     try {
       setCheckingAdmin(true);
       
-      // Call the is_admin function instead of querying roles table
+      // Call the is_admin function
       const { data, error } = await supabase.rpc('is_admin');
       
       if (error) {
@@ -51,6 +52,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
+    // Do not redirect to dashboard automatically when on specific pages
+    const noRedirectPaths = [
+      '/create',
+      '/preview',
+      '/invitation',
+      '/admin'
+    ];
+    
+    const shouldRedirect = (path: string) => {
+      return !noRedirectPaths.some(noRedirectPath => path.startsWith(noRedirectPath));
+    };
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -66,13 +79,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setCheckingAdmin(false);
         }
 
-        // Redirect admin users to admin panel after login
+        // Only redirect after login, not on every auth state change
         if (session?.user && event === 'SIGNED_IN') {
-          // We'll check if admin and redirect in a setTimeout to avoid deadlocks
+          // Use setTimeout to avoid potential race conditions
           setTimeout(() => {
-            if (isAdmin) {
-              navigate('/admin');
-            } else {
+            if (location.pathname === '/auth/login' || location.pathname === '/auth/signup') {
               navigate('/dashboard');
             }
           }, 100);
@@ -100,7 +111,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   const signIn = async (email: string, password: string) => {
     try {
