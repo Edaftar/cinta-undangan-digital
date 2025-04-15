@@ -40,6 +40,7 @@ interface ProfileData {
   email_notifications?: boolean;
   dark_mode?: boolean;
   language?: string;
+  [key: string]: any; // Add index signature to handle any additional properties
 }
 
 const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
@@ -115,8 +116,8 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
     
     setSaving(true);
     try {
-      // Save preferences to the database
-      const { error } = await supabase
+      // Try to update with the full set of preferences
+      let { error } = await supabase
         .from('profiles')
         .update({
           email_notifications: preferences.emailNotifications,
@@ -126,12 +127,31 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
         })
         .eq('id', user.id);
       
-      if (error) throw error;
-      
-      toast.success('Preferences updated successfully');
+      if (error) {
+        console.error('Full update failed:', error);
+        
+        // If failed, try updating only the dark_mode preference
+        const { error: darkModeError } = await supabase
+          .from('profiles')
+          .update({
+            dark_mode: preferences.darkMode,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id);
+          
+        if (darkModeError) {
+          console.error('Dark mode update failed too:', darkModeError);
+          throw darkModeError;
+        }
+        
+        toast.success('Theme preference updated successfully');
+        toast.warning('Some preferences could not be saved. Database columns might be missing.');
+      } else {
+        toast.success('Preferences updated successfully');
+      }
     } catch (error) {
       console.error('Error saving preferences:', error);
-      toast.error('Failed to save preferences. The columns might be missing in the database.');
+      toast.error('Failed to save preferences');
     } finally {
       setSaving(false);
     }

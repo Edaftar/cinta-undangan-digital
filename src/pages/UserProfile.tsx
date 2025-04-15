@@ -26,6 +26,7 @@ const UserProfile = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [formData, setFormData] = useState({
@@ -36,17 +37,30 @@ const UserProfile = () => {
   });
   
   useEffect(() => {
+    // Add a timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        setError("Loading is taking longer than expected. Please refresh the page.");
+      }
+    }, 10000);
+
     if (!user) {
       navigate('/auth/login');
+      clearTimeout(timeoutId);
       return;
     }
     
     fetchProfile();
+    
+    return () => clearTimeout(timeoutId);
   }, [user, navigate]);
   
   const fetchProfile = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
+      console.log("Fetching profile for user:", user?.id);
       
       const { data, error } = await supabase
         .from('profiles')
@@ -54,7 +68,14 @@ const UserProfile = () => {
         .eq('id', user?.id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profile:', error);
+        setError("Failed to load profile: " + error.message);
+        toast.error('Failed to load profile');
+        return;
+      }
+      
+      console.log("Profile data received:", data);
       
       if (data) {
         setProfileData(data);
@@ -64,9 +85,12 @@ const UserProfile = () => {
           email: data.email || '',
           phone: data.phone || ''
         });
+      } else {
+        setError("No profile data found");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching profile:', error);
+      setError("Failed to load profile: " + error.message);
       toast.error('Failed to load profile');
     } finally {
       setLoading(false);
@@ -99,7 +123,7 @@ const UserProfile = () => {
       
       toast.success('Profile updated successfully');
       fetchProfile();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
     } finally {
@@ -124,10 +148,15 @@ const UserProfile = () => {
       
       setProfileData(prev => prev ? {...prev, avatar_url: publicUrl} : null);
       toast.success('Profile photo updated successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating avatar:', error);
       toast.error('Failed to update profile photo');
     }
+  };
+  
+  const handleRetry = () => {
+    setError(null);
+    fetchProfile();
   };
   
   if (loading) {
@@ -135,7 +164,37 @@ const UserProfile = () => {
       <div className="min-h-screen flex flex-col bg-wedding-ivory">
         <Navbar />
         <main className="flex-grow flex items-center justify-center">
-          <Loader2 className="h-12 w-12 animate-spin text-wedding-rosegold" />
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-wedding-rosegold mx-auto mb-4" />
+            <p className="text-wedding-text">Loading your profile...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col bg-wedding-ivory">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center">
+          <Card className="w-full max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle className="text-xl text-red-500">Error Loading Profile</CardTitle>
+              <CardDescription>
+                {error}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <button 
+                onClick={handleRetry}
+                className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white font-medium py-2 px-4 rounded-lg w-full"
+              >
+                Try Again
+              </button>
+            </CardContent>
+          </Card>
         </main>
         <Footer />
       </div>

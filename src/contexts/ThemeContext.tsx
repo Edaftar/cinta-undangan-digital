@@ -38,7 +38,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('dark_mode')
+          .select('*')
           .eq('id', user.id)
           .single();
 
@@ -48,7 +48,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
 
         // Cast data to our ProfileWithPreferences type which includes the dark_mode field
-        const profileData = data as unknown as ProfileWithPreferences;
+        const profileData = data as ProfileWithPreferences;
         
         // If dark_mode exists and is true, set theme to dark
         if (profileData && profileData.dark_mode) {
