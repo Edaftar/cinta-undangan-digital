@@ -75,12 +75,15 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
         return;
       }
       
-      if (data) {
+      // Cast data to our ProfileData type with optional preference fields
+      const profileData = data as ProfileData;
+      
+      if (profileData) {
         // Use optional chaining and nullish coalescing to handle potentially missing fields
         setPreferences({
-          emailNotifications: data.email_notifications ?? true,
-          darkMode: data.dark_mode ?? false,
-          language: data.language ?? 'en'
+          emailNotifications: profileData.email_notifications ?? true,
+          darkMode: profileData.dark_mode ?? false,
+          language: profileData.language ?? 'en'
         });
       }
       
