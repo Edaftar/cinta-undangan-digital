@@ -10,6 +10,15 @@ interface ThemeContextType {
   toggleTheme: () => Promise<void>;
 }
 
+// Define an interface for the profile data including the dark_mode field
+interface ProfileWithPreferences {
+  id: string;
+  dark_mode?: boolean;
+  email_notifications?: boolean;
+  language?: string;
+  [key: string]: any; // To allow for other properties
+}
+
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -38,8 +47,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           return;
         }
 
+        // Cast data to our ProfileWithPreferences type which includes the dark_mode field
+        const profileData = data as unknown as ProfileWithPreferences;
+        
         // If dark_mode exists and is true, set theme to dark
-        if (data && data.dark_mode) {
+        if (profileData && profileData.dark_mode) {
           setTheme('dark');
         } else {
           setTheme('light');
