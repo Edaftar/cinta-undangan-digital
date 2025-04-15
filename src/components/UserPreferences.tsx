@@ -26,6 +26,21 @@ interface Preferences {
   language: string;
 }
 
+// Define an interface for profile data that includes our preference fields as optional
+interface ProfileData {
+  id: string;
+  avatar_url: string | null;
+  email: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  created_at: string;
+  updated_at: string;
+  email_notifications?: boolean;
+  dark_mode?: boolean;
+  language?: string;
+}
+
 const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
   const { user } = useAuth();
   const [preferences, setPreferences] = useState<Preferences>({
@@ -54,25 +69,18 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
         .single();
       
       if (error) {
-        if (error.code !== 'PGRST116') {
-          // PGRST116 means no rows returned, which is fine for new users
-          console.error('Error fetching preferences:', error);
-          toast.error('Failed to load preferences');
-        }
+        console.error('Error fetching preferences:', error);
+        toast.error('Failed to load preferences');
         setLoading(false);
         return;
       }
       
       if (data) {
-        // Check if the columns exist in the response before accessing them
-        const emailNotifications = data.email_notifications !== undefined ? data.email_notifications : true;
-        const darkMode = data.dark_mode !== undefined ? data.dark_mode : false;
-        const language = data.language !== undefined ? data.language : 'en';
-        
+        // Use optional chaining and nullish coalescing to handle potentially missing fields
         setPreferences({
-          emailNotifications,
-          darkMode,
-          language
+          emailNotifications: data.email_notifications ?? true,
+          darkMode: data.dark_mode ?? false,
+          language: data.language ?? 'en'
         });
       }
       
@@ -93,36 +101,15 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
     
     setSaving(true);
     try {
-      // First, let's check if the columns exist
-      const { data: tableInfo, error: tableError } = await supabase
-        .from('profiles')
-        .select('*')
-        .limit(1);
-      
-      if (tableError) {
-        console.error('Error checking table structure:', tableError);
-        throw tableError;
-      }
-      
       // Save preferences to the database
-      const updateData: any = { updated_at: new Date().toISOString() };
-      
-      // Only add fields if they exist in the table schema
-      if ('email_notifications' in (tableInfo?.[0] || {})) {
-        updateData.email_notifications = preferences.emailNotifications;
-      }
-      
-      if ('dark_mode' in (tableInfo?.[0] || {})) {
-        updateData.dark_mode = preferences.darkMode;
-      }
-      
-      if ('language' in (tableInfo?.[0] || {})) {
-        updateData.language = preferences.language;
-      }
-      
       const { error } = await supabase
         .from('profiles')
-        .update(updateData)
+        .update({
+          email_notifications: preferences.emailNotifications,
+          dark_mode: preferences.darkMode,
+          language: preferences.language,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', user.id);
       
       if (error) throw error;
@@ -130,7 +117,7 @@ const UserPreferences: React.FC<UserPreferencesProps> = ({ className }) => {
       toast.success('Preferences updated successfully');
     } catch (error) {
       console.error('Error saving preferences:', error);
-      toast.error('Failed to save preferences. The required columns might be missing in the database.');
+      toast.error('Failed to save preferences. The columns might be missing in the database.');
     } finally {
       setSaving(false);
     }
