@@ -50,6 +50,7 @@ const PreviewTemplate = () => {
   const { templateId, slug } = useParams<{ templateId?: string, slug?: string }>();
   const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [music, setMusic] = useState<{url: string, title?: string, artist?: string} | null>(null);
   const location = useLocation();
@@ -61,9 +62,14 @@ const PreviewTemplate = () => {
   // If we have a slug parameter, fetch invitation from database
   useEffect(() => {
     const fetchInvitationBySlug = async () => {
-      if (!slug) return;
+      if (!slug) {
+        setLoading(false);
+        return;
+      }
       
       setLoading(true);
+      setError(null);
+      
       try {
         console.log("Fetching invitation with slug:", slug);
         const { data, error } = await supabase
@@ -75,6 +81,7 @@ const PreviewTemplate = () => {
 
         if (error) {
           console.error("Error fetching invitation:", error);
+          setError("Undangan tidak ditemukan atau sudah tidak aktif");
           throw error;
         }
         
@@ -84,21 +91,27 @@ const PreviewTemplate = () => {
           
           // Fetch music if music_id is available
           if (data.music_id) {
-            const musicData = await fetchMusicById(data.music_id);
-            if (musicData) {
-              setMusic({
-                url: musicData.url,
-                title: musicData.title,
-                artist: musicData.artist || undefined
-              });
+            try {
+              const musicData = await fetchMusicById(data.music_id);
+              if (musicData) {
+                setMusic({
+                  url: musicData.url,
+                  title: musicData.title,
+                  artist: musicData.artist || undefined
+                });
+              }
+            } catch (musicError) {
+              console.error("Error fetching music:", musicError);
+              // Don't fail the whole page for music error
             }
           }
         } else {
           console.error("No invitation found with slug:", slug);
+          setError("Undangan tidak ditemukan");
         }
       } catch (error: any) {
         console.error("Error fetching invitation:", error);
-        toast.error("Undangan tidak ditemukan");
+        setError("Gagal memuat undangan");
       } finally {
         setLoading(false);
       }
@@ -161,6 +174,45 @@ const PreviewTemplate = () => {
       <div className="min-h-screen flex flex-col items-center justify-center bg-wedding-ivory">
         <Loader2 className="h-12 w-12 animate-spin text-wedding-rosegold" />
         <p className="mt-4 text-gray-600">Memuat undangan...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col bg-wedding-ivory">
+        <Navbar />
+        <main className="flex-grow flex flex-col items-center justify-center p-4">
+          <motion.h1 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-3xl font-bold mb-4"
+          >
+            Terjadi Kesalahan
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="text-gray-600 mb-6"
+          >
+            {error}
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+          >
+            <Button asChild>
+              <Link to="/" className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white">
+                <ChevronLeft size={16} />
+                Kembali ke Halaman Utama
+              </Link>
+            </Button>
+          </motion.div>
+        </main>
+        <Footer />
       </div>
     );
   }
@@ -244,11 +296,20 @@ const PreviewTemplate = () => {
   }
 
   const getTemplateComponent = () => {
+    // Make sure displayData exists before trying to render a template
+    if (!displayData) {
+      return (
+        <div className="p-8 text-center">
+          <p>Data undangan tidak tersedia</p>
+        </div>
+      );
+    }
+    
     // Fix: Make sure we normalize gallery data to avoid undefined values
     const safeDisplayData = {
       ...displayData,
       // Make sure gallery exists and is an array
-      gallery: Array.isArray(displayData?.gallery) ? displayData?.gallery : []
+      gallery: Array.isArray(displayData?.gallery) ? displayData.gallery : []
     };
     
     console.log("Template being rendered:", currentTemplateId);
@@ -277,7 +338,7 @@ const PreviewTemplate = () => {
   };
 
   // If we're viewing a public invitation by slug, show only the template without navigation
-  if (slug && invitation) {
+  if (slug && displayData) {
     return (
       <div className="relative">
         {music && <MusicPlayer audioUrl={music.url} title={music.title} artist={music.artist} autoplay={true} iconOnly={true} />}
@@ -287,10 +348,10 @@ const PreviewTemplate = () => {
         <section className="py-16 px-4 bg-wedding-ivory">
           <div className="max-w-md mx-auto">
             <AdvancedRSVP 
-              invitationId={invitation.id} 
-              invitationTitle={invitation.title} 
-              weddingDate={invitation.main_date}
-              weddingLocation={invitation.location}
+              invitationId={invitation?.id || ""} 
+              invitationTitle={invitation?.title || ""} 
+              weddingDate={invitation?.main_date || ""}
+              weddingLocation={invitation?.location || ""}
             />
           </div>
         </section>

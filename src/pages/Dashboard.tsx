@@ -1,31 +1,32 @@
 
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { Plus, Copy, Loader2, Pencil, Settings, Trash2, AlertTriangle } from 'lucide-react';
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { CalendarDays, Edit, Eye, ExternalLink, Loader2, MoreHorizontal, Trash2, Users } from "lucide-react";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import GuestList from "@/components/GuestList";
+import { templates } from "@/data/templates";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,205 +36,178 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { generateRandomString } from '@/lib/utils';
-import GuestList from '@/components/GuestList';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+} from "@/components/ui/alert-dialog";
+import { motion } from "framer-motion";
 
 interface Invitation {
   id: string;
-  user_id: string;
   title: string;
   slug: string;
   template_id: string;
-  active: boolean;
   bride_name: string;
   groom_name: string;
-  location: string;
   main_date: string;
-  bride_father?: string;
-  bride_mother?: string;
-  bride_photo?: string;
-  groom_father?: string;
-  groom_mother?: string;
-  groom_photo?: string;
-  akad_date?: string;
-  reception_date?: string;
-  location_address?: string;
-  location_map_url?: string;
-  love_story?: string;
-  gallery?: string[];
+  location: string;
+  active: boolean;
   created_at: string;
-  updated_at?: string;
 }
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [guests, setGuests] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
-  const [title, setTitle] = useState('');
-  const [slug, setSlug] = useState('');
-  const [templateId, setTemplateId] = useState('elegant-1'); // Default template
-  const [open, setOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedInvitationId, setSelectedInvitationId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteProcessing, setDeleteProcessing] = useState(false);
 
   useEffect(() => {
-    const fetchInvitations = async () => {
-      if (!user) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('invitations')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        if (data) {
-          setInvitations(data);
-        }
-      } catch (error) {
-        console.error("Error fetching invitations:", error);
-        toast.error("Failed to load invitations.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchInvitations();
   }, [user]);
 
-  const handleCreateInvitation = async () => {
+  const fetchInvitations = async () => {
     if (!user) return;
 
-    setIsSubmitting(true);
     try {
-      // Generate a random slug if it's empty
-      const finalSlug = slug || generateRandomString(8);
-
-      // Include all required fields based on the Supabase schema
       const { data, error } = await supabase
-        .from('invitations')
-        .insert({
-          user_id: user.id, 
-          title, 
-          slug: finalSlug,
-          template_id: templateId,
-          active: true,
-          bride_name: "Bride Name", // Default value for required field
-          groom_name: "Groom Name", // Default value for required field
-          location: "Wedding Location", // Default value for required field
-          main_date: new Date().toISOString(), // Default value for required field
-        });
+        .from("invitations")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      // Optimistically update the invitations list
-      const newInvitation: Invitation = {
-        id: generateRandomString(10), // Use a temporary ID since data might be null
-        user_id: user.id, 
-        title, 
-        slug: finalSlug,
-        template_id: templateId,
-        active: true,
-        bride_name: "Bride Name",
-        groom_name: "Groom Name",
-        location: "Wedding Location",
-        main_date: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-      };
-      
-      setInvitations(prevInvitations => [newInvitation, ...prevInvitations]);
-
-      toast.success("Undangan berhasil dibuat!");
-      setOpen(false); // Close the dialog
-      setTitle(''); // Reset the title
-      setSlug(''); // Reset the slug
+      if (data) {
+        setInvitations(data);
+        // Fetch guest count for each invitation
+        data.forEach((invitation) => fetchGuestsByInvitationId(invitation.id));
+      }
     } catch (error: any) {
-      console.error("Error creating invitation:", error);
-      toast.error("Gagal membuat undangan.");
+      console.error("Error fetching invitations:", error.message);
+      toast.error("Gagal memuat undangan");
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
-  const handleCopyToClipboard = (slug: string) => {
-    const invitationLink = `${window.location.origin}/invitation/${slug}`;
-    navigator.clipboard.writeText(invitationLink)
-      .then(() => {
-        toast.success("Link berhasil disalin ke clipboard!");
-      })
-      .catch(err => {
-        console.error("Could not copy text: ", err);
-        toast.error("Gagal menyalin link ke clipboard.");
-      });
+  const fetchGuestsByInvitationId = async (invitationId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("guests")
+        .select("*")
+        .eq("invitation_id", invitationId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      setGuests(prevGuests => ({
+        ...prevGuests,
+        [invitationId]: data || []
+      }));
+    } catch (error: any) {
+      console.error(`Error fetching guests for invitation ${invitationId}:`, error.message);
+    }
   };
 
-  const toggleInvitationStatus = async (id: string, currentStatus: boolean) => {
+  const toggleInvitationStatus = async (invitation: Invitation) => {
     try {
+      const newStatus = !invitation.active;
       const { error } = await supabase
-        .from('invitations')
-        .update({ active: !currentStatus })
-        .eq('id', id);
+        .from("invitations")
+        .update({ active: newStatus })
+        .eq("id", invitation.id);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      // Optimistically update the invitations list
-      setInvitations(prevInvitations =>
-        prevInvitations.map(invitation =>
-          invitation.id === id ? { ...invitation, active: !currentStatus } : invitation
+      setInvitations(prevInvitations => 
+        prevInvitations.map(inv => 
+          inv.id === invitation.id ? { ...inv, active: newStatus } : inv
         )
       );
 
-      toast.success(`Undangan berhasil ${!currentStatus ? 'diaktifkan' : 'dinonaktifkan'}!`);
+      toast.success(
+        newStatus ? 
+        "Undangan berhasil diaktifkan" : 
+        "Undangan berhasil dinonaktifkan"
+      );
     } catch (error: any) {
-      console.error("Error updating invitation status:", error);
-      toast.error("Gagal mengubah status undangan.");
+      console.error("Error toggling invitation status:", error.message);
+      toast.error("Gagal mengubah status undangan");
     }
   };
 
   const handleDeleteInvitation = async () => {
-    if (!deletingId) return;
+    if (!selectedInvitationId) return;
+    
+    setDeleteProcessing(true);
     
     try {
-      // First delete all guest entries associated with this invitation
+      // Delete all guests associated with this invitation
       const { error: guestsError } = await supabase
-        .from('guests')
+        .from("guests")
         .delete()
-        .eq('invitation_id', deletingId);
-        
-      if (guestsError) throw guestsError;
+        .eq("invitation_id", selectedInvitationId);
       
-      // Then delete the invitation itself
-      const { error } = await supabase
-        .from('invitations')
+      if (guestsError) {
+        throw guestsError;
+      }
+      
+      // Delete the invitation itself
+      const { error: invitationError } = await supabase
+        .from("invitations")
         .delete()
-        .eq('id', deletingId);
-        
-      if (error) throw error;
+        .eq("id", selectedInvitationId);
       
-      // Update the UI
+      if (invitationError) {
+        throw invitationError;
+      }
+      
+      // Update the state to remove the deleted invitation
       setInvitations(prevInvitations => 
-        prevInvitations.filter(invitation => invitation.id !== deletingId)
+        prevInvitations.filter(inv => inv.id !== selectedInvitationId)
       );
       
-      toast.success("Undangan berhasil dihapus!");
-    } catch (error) {
-      console.error("Error deleting invitation:", error);
-      toast.error("Gagal menghapus undangan.");
+      toast.success("Undangan berhasil dihapus");
+      setDeleteDialogOpen(false);
+    } catch (error: any) {
+      console.error("Error deleting invitation:", error.message);
+      toast.error("Gagal menghapus undangan");
     } finally {
-      setDeletingId(null);
+      setDeleteProcessing(false);
+      setSelectedInvitationId(null);
+    }
+  };
+
+  const getTemplateNameById = (templateId: string) => {
+    const template = templates.find(t => t.id === templateId);
+    return template ? template.name : templateId;
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return format(date, "EEEE, d MMMM yyyy", { locale: id });
+    } catch (error) {
+      return dateString;
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-wedding-ivory">
-        <Loader2 className="h-12 w-12 animate-spin text-wedding-rosegold" />
+      <div className="min-h-screen flex flex-col bg-wedding-ivory">
+        <Navbar />
+        <div className="flex-grow flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-wedding-rosegold" />
+          <span className="ml-2 text-gray-600">Memuat data...</span>
+        </div>
+        <Footer />
       </div>
     );
   }
@@ -241,163 +215,193 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen flex flex-col bg-wedding-ivory">
       <Navbar />
-      <div className="container mx-auto py-10 flex-grow">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <div>
-              <CardTitle className="text-2xl font-bold">Dashboard</CardTitle>
-              <CardDescription>Kelola undangan pernikahan Anda</CardDescription>
-            </div>
-            
-            <div className="flex space-x-2">
+      
+      <main className="flex-grow py-10 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <motion.div 
+            className="mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Dashboard</h1>
+            <p className="text-gray-600">Kelola undangan digital Anda di sini</p>
+          </motion.div>
+          
+          <motion.div 
+            className="mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-800">Undangan Saya</h2>
               <Button 
-                variant="outline" 
-                className="border-wedding-sage text-wedding-sage hover:bg-wedding-light-sage"
+                className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white"
                 asChild
               >
-                <Link to="/profile">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Pengaturan Profil
+                <Link to="/templates">
+                  Buat Undangan Baru
                 </Link>
               </Button>
-              
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Buat Undangan
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Buat Undangan</DialogTitle>
-                    <DialogDescription>
-                      Buat undangan baru untuk dibagikan dengan orang yang Anda sayangi.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="title" className="text-right">
-                        Judul
-                      </Label>
-                      <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="slug" className="text-right">
-                        Slug
-                      </Label>
-                      <Input id="slug" value={slug} onChange={(e) => setSlug(e.target.value)} className="col-span-3" />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button type="submit" onClick={handleCreateInvitation} disabled={isSubmitting}>
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Membuat...
-                        </>
-                      ) : (
-                        "Buat"
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
             </div>
-          </CardHeader>
-          
-          <CardContent>
+            
             {invitations.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">Belum ada undangan yang dibuat.</p>
+              <div className="bg-white rounded-lg shadow p-8 text-center">
+                <h3 className="text-lg font-semibold mb-2">Belum Ada Undangan</h3>
+                <p className="text-gray-600 mb-6">
+                  Anda belum memiliki undangan digital. Mulai dengan membuat undangan pertama Anda.
+                </p>
+                <Button 
+                  className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white"
+                  asChild
+                >
+                  <Link to="/templates">
+                    Pilih Template
+                  </Link>
+                </Button>
               </div>
             ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Judul</TableHead>
-                      <TableHead>Slug</TableHead>
-                      <TableHead className="text-right">Aksi</TableHead>
-                      <TableHead className="text-center">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {invitations.map((invitation) => (
-                      <React.Fragment key={invitation.id}>
-                        <TableRow>
-                          <TableCell className="font-medium">{invitation.title}</TableCell>
-                          <TableCell>{invitation.slug}</TableCell>
-                          <TableCell className="text-right flex gap-2 justify-end">
-                            <Button size="sm" variant="outline" onClick={() => handleCopyToClipboard(invitation.slug)}>
-                              <Copy className="mr-2 h-4 w-4" />
-                              Salin Link
-                            </Button>
-                            <Button size="sm" asChild>
-                              <Link to={`/create/${invitation.template_id}`} state={{ weddingData: invitation }}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Edit
-                              </Link>
-                            </Button>
-                            <Button size="sm" asChild>
-                              <Link to={`/invitation/${invitation.slug}`} target="_blank">
-                                Preview
-                              </Link>
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button size="sm" variant="destructive">
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Hapus
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Hapus Undangan?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Tindakan ini tidak dapat dibatalkan. Undangan dan semua data terkait akan dihapus secara permanen.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Batal</AlertDialogCancel>
-                                  <AlertDialogAction 
-                                    className="bg-red-600 hover:bg-red-700"
-                                    onClick={() => {
-                                      setDeletingId(invitation.id);
-                                      handleDeleteInvitation();
-                                    }}
-                                  >
-                                    <AlertTriangle className="mr-2 h-4 w-4" />
-                                    Hapus Permanen
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Button
-                              size="sm"
-                              variant={invitation.active ? "destructive" : "outline"}
-                              onClick={() => toggleInvitationStatus(invitation.id, invitation.active)}
-                            >
-                              {invitation.active ? 'Nonaktifkan' : 'Aktifkan'}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                        <TableRow key={`${invitation.id}-guestlist`}>
-                          <TableCell colSpan={5}>
-                            <GuestList invitationId={invitation.id} invitationTitle={invitation.title} />
-                          </TableCell>
-                        </TableRow>
-                      </React.Fragment>
-                    ))}
-                  </TableBody>
-                </Table>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {invitations.map((invitation) => {
+                  const template = templates.find(t => t.id === invitation.template_id);
+                  const guestCount = guests[invitation.id]?.length || 0;
+                  
+                  return (
+                    <Card key={invitation.id} className={`overflow-hidden ${!invitation.active ? 'opacity-75' : ''}`}>
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="text-lg">{invitation.title}</CardTitle>
+                            <CardDescription>{getTemplateNameById(invitation.template_id)}</CardDescription>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem 
+                                className="cursor-pointer"
+                                onClick={() => navigate(`/invitation/${invitation.slug}`)}
+                              >
+                                <Eye className="mr-2 h-4 w-4" />
+                                <span>Lihat</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="cursor-pointer"
+                                onClick={() => navigate(`/create/${invitation.template_id}`, { state: { invitationId: invitation.id } })}
+                              >
+                                <Edit className="mr-2 h-4 w-4" />
+                                <span>Edit</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="cursor-pointer text-red-600 focus:text-red-600"
+                                onClick={() => {
+                                  setSelectedInvitationId(invitation.id);
+                                  setDeleteDialogOpen(true);
+                                }}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>Hapus</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <div className="flex items-center mt-1">
+                          <Badge variant={invitation.active ? "default" : "outline"} className="mr-2">
+                            {invitation.active ? "Aktif" : "Nonaktif"}
+                          </Badge>
+                          <Badge variant="secondary" className="flex items-center">
+                            <Users className="h-3 w-3 mr-1" />
+                            {guestCount} tamu
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-2">
+                        <div className="flex flex-col text-sm text-gray-600 space-y-1.5">
+                          <div className="flex items-center">
+                            <CalendarDays className="h-4 w-4 mr-2 text-wedding-sage" />
+                            <span>{formatDate(invitation.main_date)}</span>
+                          </div>
+                          <div className="flex items-start">
+                            <ExternalLink className="h-4 w-4 mr-2 text-wedding-sage shrink-0 mt-0.5" />
+                            <span className="truncate">{`${window.location.origin}/invitation/${invitation.slug}`}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                      <CardFooter className="flex justify-between">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => toggleInvitationStatus(invitation)}
+                        >
+                          {invitation.active ? "Nonaktifkan" : "Aktifkan"}
+                        </Button>
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          className="bg-wedding-sage hover:bg-wedding-sage/80 text-white"
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${window.location.origin}/invitation/${invitation.slug}`);
+                            toast.success("Tautan berhasil disalin");
+                          }}
+                        >
+                          Salin Tautan
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
               </div>
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </motion.div>
+          
+          <motion.div 
+            className="mt-16"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <h2 className="text-xl font-semibold text-gray-800 mb-6">Tamu Undangan</h2>
+            <GuestList invitations={invitations} />
+          </motion.div>
+        </div>
+      </main>
+      
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Undangan</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini tidak dapat dibatalkan. Undangan ini akan dihapus secara permanen dari sistem kami.
+              Semua data tamu undangan juga akan dihapus.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteProcessing}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteInvitation();
+              }}
+              disabled={deleteProcessing}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deleteProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <span>Menghapus...</span>
+                </>
+              ) : (
+                "Hapus"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
       <Footer />
     </div>
   );

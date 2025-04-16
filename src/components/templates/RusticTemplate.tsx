@@ -2,6 +2,8 @@
 import React from "react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import GiftRegistry from "../GiftRegistry";
+import InteractiveMap from "../InteractiveMap";
 
 interface WeddingData {
   brideName?: string;
@@ -21,6 +23,18 @@ interface WeddingData {
   loveStory?: string;
   gallery?: string[];
   title?: string;
+  bankAccounts?: {
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+    logoUrl?: string;
+  }[];
+  digitalWallets?: {
+    walletName: string;
+    accountNumber: string;
+    accountName: string;
+    logoUrl?: string;
+  }[];
 }
 
 const RusticTemplate: React.FC<{ data?: WeddingData }> = ({ data }) => {
@@ -178,16 +192,13 @@ const RusticTemplate: React.FC<{ data?: WeddingData }> = ({ data }) => {
               )}
             </div>
 
-            {data.locationMapUrl && (
-              <div className="mt-12 text-center">
-                <a 
-                  href={data.locationMapUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-block bg-wedding-sage hover:bg-opacity-80 text-white font-medium px-6 py-3 rounded-md transition-colors"
-                >
-                  Lihat Lokasi di Google Maps
-                </a>
+            {/* Interactive Map - Enhanced version */}
+            {data.locationAddress && (
+              <div className="mt-12">
+                <InteractiveMap 
+                  locationAddress={data.locationAddress}
+                  locationMapUrl={data.locationMapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.locationAddress)}`}
+                />
               </div>
             )}
           </div>
@@ -241,9 +252,28 @@ const RusticTemplate: React.FC<{ data?: WeddingData }> = ({ data }) => {
           </div>
         </section>
       )}
+      
+      {/* Gift Registry - New Feature */}
+      <section className="bg-white py-16 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center">
+            <div className="inline-block border-4 border-wedding-sage p-1 mb-8 mx-auto">
+              <div className="border border-wedding-sage py-2 px-8">
+                <h2 className="text-2xl font-dancing font-bold">
+                  Hadiah Pernikahan
+                </h2>
+              </div>
+            </div>
+          </div>
+          <GiftRegistry 
+            bankAccounts={data.bankAccounts}
+            digitalWallets={data.digitalWallets}
+          />
+        </div>
+      </section>
 
       {/* Quote */}
-      <section className="bg-white py-16 px-4">
+      <section className="bg-wedding-ivory py-16 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <div className="mb-8">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-wedding-sage mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
