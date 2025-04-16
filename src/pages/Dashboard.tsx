@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Plus, Copy, Loader2, Pencil, Settings } from 'lucide-react';
+import { Plus, Copy, Loader2, Pencil, Settings, Trash2, AlertTriangle } from 'lucide-react';
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -26,6 +26,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { generateRandomString } from '@/lib/utils';
 import GuestList from '@/components/GuestList';
 import Navbar from '@/components/Navbar';
@@ -67,6 +78,7 @@ const Dashboard = () => {
   const [templateId, setTemplateId] = useState('elegant-1'); // Default template
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchInvitations = async () => {
@@ -137,13 +149,13 @@ const Dashboard = () => {
       
       setInvitations(prevInvitations => [newInvitation, ...prevInvitations]);
 
-      toast.success("Invitation created successfully!");
+      toast.success("Undangan berhasil dibuat!");
       setOpen(false); // Close the dialog
       setTitle(''); // Reset the title
       setSlug(''); // Reset the slug
     } catch (error: any) {
       console.error("Error creating invitation:", error);
-      toast.error("Failed to create invitation.");
+      toast.error("Gagal membuat undangan.");
     } finally {
       setIsSubmitting(false);
     }
@@ -153,11 +165,11 @@ const Dashboard = () => {
     const invitationLink = `${window.location.origin}/invitation/${slug}`;
     navigator.clipboard.writeText(invitationLink)
       .then(() => {
-        toast.success("Link copied to clipboard!");
+        toast.success("Link berhasil disalin ke clipboard!");
       })
       .catch(err => {
         console.error("Could not copy text: ", err);
-        toast.error("Failed to copy link to clipboard.");
+        toast.error("Gagal menyalin link ke clipboard.");
       });
   };
 
@@ -177,10 +189,44 @@ const Dashboard = () => {
         )
       );
 
-      toast.success(`Invitation ${!currentStatus ? 'activated' : 'deactivated'}!`);
+      toast.success(`Undangan berhasil ${!currentStatus ? 'diaktifkan' : 'dinonaktifkan'}!`);
     } catch (error: any) {
       console.error("Error updating invitation status:", error);
-      toast.error("Failed to update invitation status.");
+      toast.error("Gagal mengubah status undangan.");
+    }
+  };
+
+  const handleDeleteInvitation = async () => {
+    if (!deletingId) return;
+    
+    try {
+      // First delete all guest entries associated with this invitation
+      const { error: guestsError } = await supabase
+        .from('guests')
+        .delete()
+        .eq('invitation_id', deletingId);
+        
+      if (guestsError) throw guestsError;
+      
+      // Then delete the invitation itself
+      const { error } = await supabase
+        .from('invitations')
+        .delete()
+        .eq('id', deletingId);
+        
+      if (error) throw error;
+      
+      // Update the UI
+      setInvitations(prevInvitations => 
+        prevInvitations.filter(invitation => invitation.id !== deletingId)
+      );
+      
+      toast.success("Undangan berhasil dihapus!");
+    } catch (error) {
+      console.error("Error deleting invitation:", error);
+      toast.error("Gagal menghapus undangan.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -200,7 +246,7 @@ const Dashboard = () => {
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <div>
               <CardTitle className="text-2xl font-bold">Dashboard</CardTitle>
-              <CardDescription>Manage your wedding invitations</CardDescription>
+              <CardDescription>Kelola undangan pernikahan Anda</CardDescription>
             </div>
             
             <div className="flex space-x-2">
@@ -211,7 +257,7 @@ const Dashboard = () => {
               >
                 <Link to="/profile">
                   <Settings className="mr-2 h-4 w-4" />
-                  Profile Settings
+                  Pengaturan Profil
                 </Link>
               </Button>
               
@@ -219,20 +265,20 @@ const Dashboard = () => {
                 <DialogTrigger asChild>
                   <Button>
                     <Plus className="mr-2 h-4 w-4" />
-                    Create Invitation
+                    Buat Undangan
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
-                    <DialogTitle>Create Invitation</DialogTitle>
+                    <DialogTitle>Buat Undangan</DialogTitle>
                     <DialogDescription>
-                      Create a new invitation to share with your loved ones.
+                      Buat undangan baru untuk dibagikan dengan orang yang Anda sayangi.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="title" className="text-right">
-                        Title
+                        Judul
                       </Label>
                       <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} className="col-span-3" />
                     </div>
@@ -248,10 +294,10 @@ const Dashboard = () => {
                       {isSubmitting ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Creating...
+                          Membuat...
                         </>
                       ) : (
-                        "Create"
+                        "Buat"
                       )}
                     </Button>
                   </DialogFooter>
@@ -263,16 +309,16 @@ const Dashboard = () => {
           <CardContent>
             {invitations.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-500">No invitations created yet.</p>
+                <p className="text-gray-500">Belum ada undangan yang dibuat.</p>
               </div>
             ) : (
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Title</TableHead>
+                      <TableHead>Judul</TableHead>
                       <TableHead>Slug</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="text-right">Aksi</TableHead>
                       <TableHead className="text-center">Status</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -285,7 +331,7 @@ const Dashboard = () => {
                           <TableCell className="text-right flex gap-2 justify-end">
                             <Button size="sm" variant="outline" onClick={() => handleCopyToClipboard(invitation.slug)}>
                               <Copy className="mr-2 h-4 w-4" />
-                              Copy Link
+                              Salin Link
                             </Button>
                             <Button size="sm" asChild>
                               <Link to={`/create/${invitation.template_id}`} state={{ weddingData: invitation }}>
@@ -298,6 +344,35 @@ const Dashboard = () => {
                                 Preview
                               </Link>
                             </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button size="sm" variant="destructive">
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Hapus
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Hapus Undangan?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tindakan ini tidak dapat dibatalkan. Undangan dan semua data terkait akan dihapus secara permanen.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Batal</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    className="bg-red-600 hover:bg-red-700"
+                                    onClick={() => {
+                                      setDeletingId(invitation.id);
+                                      handleDeleteInvitation();
+                                    }}
+                                  >
+                                    <AlertTriangle className="mr-2 h-4 w-4" />
+                                    Hapus Permanen
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </TableCell>
                           <TableCell className="text-center">
                             <Button
@@ -305,7 +380,7 @@ const Dashboard = () => {
                               variant={invitation.active ? "destructive" : "outline"}
                               onClick={() => toggleInvitationStatus(invitation.id, invitation.active)}
                             >
-                              {invitation.active ? 'Deactivate' : 'Activate'}
+                              {invitation.active ? 'Nonaktifkan' : 'Aktifkan'}
                             </Button>
                           </TableCell>
                         </TableRow>

@@ -13,7 +13,8 @@ import RusticTemplate from "@/components/templates/RusticTemplate";
 import TraditionalJavaTemplate from "@/components/templates/TraditionalJavaTemplate";
 import ModernGeometryTemplate from "@/components/templates/ModernGeometryTemplate";
 import IslamicOrnamentTemplate from "@/components/templates/IslamicOrnamentTemplate";
-import RSVP from "@/components/RSVP";
+import EleganceWhiteTemplate from "@/components/templates/EleganceWhiteTemplate";
+import AdvancedRSVP from "@/components/AdvancedRSVP";
 import { toast } from "sonner";
 import { generateInvitationPDF } from "@/utils/pdfUtils";
 import MusicPlayer from "@/components/MusicPlayer";
@@ -48,7 +49,7 @@ interface Invitation {
 const PreviewTemplate = () => {
   const { templateId, slug } = useParams<{ templateId?: string, slug?: string }>();
   const [invitation, setInvitation] = useState<Invitation | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [music, setMusic] = useState<{url: string, title?: string, artist?: string} | null>(null);
   const location = useLocation();
@@ -64,6 +65,7 @@ const PreviewTemplate = () => {
       
       setLoading(true);
       try {
+        console.log("Fetching invitation with slug:", slug);
         const { data, error } = await supabase
           .from("invitations")
           .select("*")
@@ -71,7 +73,10 @@ const PreviewTemplate = () => {
           .eq("active", true)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error fetching invitation:", error);
+          throw error;
+        }
         
         if (data) {
           console.log("Fetched invitation data:", data);
@@ -88,6 +93,8 @@ const PreviewTemplate = () => {
               });
             }
           }
+        } else {
+          console.error("No invitation found with slug:", slug);
         }
       } catch (error: any) {
         console.error("Error fetching invitation:", error);
@@ -111,20 +118,23 @@ const PreviewTemplate = () => {
   console.log("Display data:", displayData);
 
   const handleShare = () => {
+    // Create the full URL including the base URL of the site
+    const fullUrl = `${window.location.origin}/invitation/${displayData?.slug}`;
+    
     if (navigator.share) {
       navigator.share({
         title: `Undangan Pernikahan ${displayData?.bride_name || 'Pengantin'} & ${displayData?.groom_name || 'Pengantin'}`,
         text: 'Kami mengundang Anda untuk hadir di acara pernikahan kami',
-        url: window.location.href,
+        url: fullUrl,
       })
       .catch(() => {
         // Fallback if share fails
-        navigator.clipboard.writeText(window.location.href);
+        navigator.clipboard.writeText(fullUrl);
         toast.success("Tautan berhasil disalin ke clipboard");
       });
     } else {
       // Fallback for browsers that don't support sharing
-      navigator.clipboard.writeText(window.location.href);
+      navigator.clipboard.writeText(fullUrl);
       toast.success("Tautan berhasil disalin ke clipboard");
     }
   };
@@ -213,7 +223,7 @@ const PreviewTemplate = () => {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="text-gray-600 mb-6"
           >
-            Maaf, undangan yang Anda cari tidak tersedia.
+            Maaf, undangan yang Anda cari tidak tersedia atau mungkin telah dinonaktifkan.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -252,11 +262,15 @@ const PreviewTemplate = () => {
       case 'rustic-1':
         return <RusticTemplate data={safeDisplayData} />;
       case 'traditional-1':
+      case 'jawa-1':
         return <TraditionalJavaTemplate data={safeDisplayData} />;
       case 'modern-1':
         return <ModernGeometryTemplate data={safeDisplayData} />;
       case 'islamic-1':
+      case 'islamic-2':
         return <IslamicOrnamentTemplate data={safeDisplayData} />;
+      case 'elegance-white':
+        return <EleganceWhiteTemplate data={safeDisplayData} />;
       default:
         return <ElegantRoseTemplate data={safeDisplayData} />; // Fallback to elegant template
     }
@@ -272,7 +286,12 @@ const PreviewTemplate = () => {
         {/* Add RSVP section for public invitations */}
         <section className="py-16 px-4 bg-wedding-ivory">
           <div className="max-w-md mx-auto">
-            <RSVP invitationId={invitation.id} invitationTitle={invitation.title} />
+            <AdvancedRSVP 
+              invitationId={invitation.id} 
+              invitationTitle={invitation.title} 
+              weddingDate={invitation.main_date}
+              weddingLocation={invitation.location}
+            />
           </div>
         </section>
       </div>

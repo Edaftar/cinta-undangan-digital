@@ -123,5 +123,40 @@ export const templates = [
     ],
     category: "islamic",
     popular: true
+  },
+  {
+    id: "elegance-white",
+    name: "Elegance White",
+    description: "Template minimalis modern dengan dominasi warna putih dan tipografi elegan untuk pernikahan mewah.",
+    image: "/template-previews/elegance-white-preview.jpg",
+    features: [
+      "Desain minimalis premium",
+      "Animasi transisi halus",
+      "Foto profil melingkar",
+      "Galeri foto interaktif",
+      "Layout modern",
+      "Font elegan",
+      "RSVP terintegrasi",
+      "Kompatibel semua perangkat"
+    ],
+    category: "minimalist",
+    popular: true
+  },
+  {
+    id: "vintage-garden",
+    name: "Vintage Garden",
+    description: "Template romantis dengan tema taman vintage, ilustrasi flora dan dekorasi klasik.",
+    image: "/template-previews/vintage-garden-preview.jpg",
+    features: [
+      "Ilustrasi floral",
+      "Elemen vintage",
+      "Animasi scroll lembut",
+      "Layout bergaya majalah",
+      "Efek foto artistik",
+      "Timeline sejarah cinta",
+      "Peta interaktif",
+      "Ucapan tamu terintegrasi"
+    ],
+    category: "elegant"
   }
 ];

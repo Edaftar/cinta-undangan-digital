@@ -66,6 +66,7 @@ const App = () => (
                   <AdminPanel />
                 </ProtectedRoute>
               } />
+              {/* Make sure this route is defined correctly for public invitations */}
               <Route path="/invitation/:slug" element={<PreviewTemplate />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
