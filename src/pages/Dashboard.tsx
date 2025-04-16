@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label"
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -29,6 +28,8 @@ import {
 } from "@/components/ui/dialog"
 import { generateRandomString } from '@/lib/utils';
 import GuestList from '@/components/GuestList';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 interface Invitation {
   id: string;
@@ -192,133 +193,137 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-          <div>
-            <CardTitle className="text-2xl font-bold">Dashboard</CardTitle>
-            <CardDescription>Manage your wedding invitations</CardDescription>
-          </div>
-          
-          <div className="flex space-x-2">
-            <Button 
-              variant="outline" 
-              className="border-wedding-sage text-wedding-sage hover:bg-wedding-light-sage"
-              asChild
-            >
-              <Link to="/profile">
-                <Settings className="mr-2 h-4 w-4" />
-                Profile Settings
-              </Link>
-            </Button>
+    <div className="min-h-screen flex flex-col bg-wedding-ivory">
+      <Navbar />
+      <div className="container mx-auto py-10 flex-grow">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <div>
+              <CardTitle className="text-2xl font-bold">Dashboard</CardTitle>
+              <CardDescription>Manage your wedding invitations</CardDescription>
+            </div>
             
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Invitation
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Create Invitation</DialogTitle>
-                  <DialogDescription>
-                    Create a new invitation to share with your loved ones.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="title" className="text-right">
-                      Title
-                    </Label>
-                    <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} className="col-span-3" />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="slug" className="text-right">
-                      Slug
-                    </Label>
-                    <Input id="slug" value={slug} onChange={(e) => setSlug(e.target.value)} className="col-span-3" />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit" onClick={handleCreateInvitation} disabled={isSubmitting}>
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating...
-                      </>
-                    ) : (
-                      "Create"
-                    )}
+            <div className="flex space-x-2">
+              <Button 
+                variant="outline" 
+                className="border-wedding-sage text-wedding-sage hover:bg-wedding-light-sage"
+                asChild
+              >
+                <Link to="/profile">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Profile Settings
+                </Link>
+              </Button>
+              
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Invitation
                   </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        
-        <CardContent>
-          {invitations.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">No invitations created yet.</p>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Create Invitation</DialogTitle>
+                    <DialogDescription>
+                      Create a new invitation to share with your loved ones.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="title" className="text-right">
+                        Title
+                      </Label>
+                      <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="slug" className="text-right">
+                        Slug
+                      </Label>
+                      <Input id="slug" value={slug} onChange={(e) => setSlug(e.target.value)} className="col-span-3" />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button type="submit" onClick={handleCreateInvitation} disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        "Create"
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
-          ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Slug</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {invitations.map((invitation) => (
-                    <React.Fragment key={invitation.id}>
-                      <TableRow>
-                        <TableCell className="font-medium">{invitation.title}</TableCell>
-                        <TableCell>{invitation.slug}</TableCell>
-                        <TableCell className="text-right flex gap-2 justify-end">
-                          <Button size="sm" variant="outline" onClick={() => handleCopyToClipboard(invitation.slug)}>
-                            <Copy className="mr-2 h-4 w-4" />
-                            Copy Link
-                          </Button>
-                          <Button size="sm" asChild>
-                            <Link to={`/create/${invitation.template_id}`} state={{ weddingData: invitation }}>
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Edit
-                            </Link>
-                          </Button>
-                          <Button size="sm" asChild>
-                            <Link to={`/preview/${invitation.template_id}`} state={{ weddingData: invitation }}>
-                              Preview
-                            </Link>
-                          </Button>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Button
-                            size="sm"
-                            variant={invitation.active ? "destructive" : "outline"}
-                            onClick={() => toggleInvitationStatus(invitation.id, invitation.active)}
-                          >
-                            {invitation.active ? 'Deactivate' : 'Activate'}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                      <TableRow key={`${invitation.id}-guestlist`}>
-                        <TableCell colSpan={5}>
-                          <GuestList invitationId={invitation.id} invitationTitle={invitation.title} />
-                        </TableCell>
-                      </TableRow>
-                    </React.Fragment>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          
+          <CardContent>
+            {invitations.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No invitations created yet.</p>
+              </div>
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Slug</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="text-center">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {invitations.map((invitation) => (
+                      <React.Fragment key={invitation.id}>
+                        <TableRow>
+                          <TableCell className="font-medium">{invitation.title}</TableCell>
+                          <TableCell>{invitation.slug}</TableCell>
+                          <TableCell className="text-right flex gap-2 justify-end">
+                            <Button size="sm" variant="outline" onClick={() => handleCopyToClipboard(invitation.slug)}>
+                              <Copy className="mr-2 h-4 w-4" />
+                              Copy Link
+                            </Button>
+                            <Button size="sm" asChild>
+                              <Link to={`/create/${invitation.template_id}`} state={{ weddingData: invitation }}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit
+                              </Link>
+                            </Button>
+                            <Button size="sm" asChild>
+                              <Link to={`/invitation/${invitation.slug}`} target="_blank">
+                                Preview
+                              </Link>
+                            </Button>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Button
+                              size="sm"
+                              variant={invitation.active ? "destructive" : "outline"}
+                              onClick={() => toggleInvitationStatus(invitation.id, invitation.active)}
+                            >
+                              {invitation.active ? 'Deactivate' : 'Activate'}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow key={`${invitation.id}-guestlist`}>
+                          <TableCell colSpan={5}>
+                            <GuestList invitationId={invitation.id} invitationTitle={invitation.title} />
+                          </TableCell>
+                        </TableRow>
+                      </React.Fragment>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      <Footer />
     </div>
   );
 };

@@ -11,8 +11,11 @@ export interface Template {
 
 export const categories = [
   { id: "all", name: "Semua" },
-  { id: "standard", name: "Standard" },
-  { id: "premium", name: "Premium" },
+  { id: "elegant", name: "Elegant" },
+  { id: "minimalist", name: "Minimalist" },
+  { id: "rustic", name: "Rustic" },
+  { id: "traditional", name: "Traditional" },
+  { id: "modern", name: "Modern" },
   { id: "islamic", name: "Islamic" }
 ];
 
@@ -29,7 +32,8 @@ export const templates = [
       "Cerita cinta",
       "Lokasi peta"
     ],
-    category: "premium"
+    category: "elegant",
+    popular: true
   },
   {
     id: "minimalist-1",
@@ -43,7 +47,7 @@ export const templates = [
       "Hitung mundur",
       "Lokasi peta"
     ],
-    category: "standard"
+    category: "minimalist"
   },
   {
     id: "rustic-1",
@@ -57,7 +61,8 @@ export const templates = [
       "Lokasi peta",
       "RSVP online"
     ],
-    category: "premium"
+    category: "rustic",
+    popular: true
   },
   {
     id: "modern-1",
@@ -71,7 +76,7 @@ export const templates = [
       "Galeri masonry",
       "RSVP digital"
     ],
-    category: "premium"
+    category: "modern"
   },
   {
     id: "jawa-1",
@@ -85,7 +90,7 @@ export const templates = [
       "Galeri foto",
       "RSVP online"
     ],
-    category: "premium"
+    category: "traditional"
   },
   {
     id: "islamic-1",
@@ -99,7 +104,7 @@ export const templates = [
       "Lokasi masjid",
       "RSVP digital"
     ],
-    category: "premium"
+    category: "islamic"
   },
   {
     id: "islamic-2",
@@ -111,8 +116,12 @@ export const templates = [
       "Animasi halus",
       "Ayat-ayat pilihan",
       "RSVP digital",
-      "Mobile-friendly"
+      "Mobile-friendly",
+      "Background islami",
+      "Font Arabic",
+      "Tema warna emas-hijau"
     ],
-    category: "islamic"
+    category: "islamic",
+    popular: true
   }
 ];

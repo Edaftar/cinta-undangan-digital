@@ -34,8 +34,9 @@ export const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRoutePr
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
-  // Redirect if not admin but trying to access admin pages
+  // Only check admin status if the route requires admin privileges
   if (adminOnly && !isAdmin) {
+    console.log("Admin access denied. isAdmin:", isAdmin);
     return <Navigate to="/dashboard" replace />;
   }
 
