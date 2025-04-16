@@ -25,14 +25,7 @@ import Blog from "./pages/Blog";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      staleTime: 30000,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -43,7 +36,6 @@ const App = () => (
         <AuthProvider>
           <SmoothScroll>
             <Routes>
-              {/* Public Routes */}
               <Route path="/" element={<Index />} />
               <Route path="/templates" element={<Templates />} />
               <Route path="/about" element={<About />} />
@@ -53,8 +45,6 @@ const App = () => (
               <Route path="/terms" element={<Terms />} />
               <Route path="/auth/login" element={<Login />} />
               <Route path="/auth/signup" element={<Signup />} />
-              
-              {/* Protected User Routes */}
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <UserProfile />
@@ -71,18 +61,13 @@ const App = () => (
                   <Dashboard />
                 </ProtectedRoute>
               } />
-              
-              {/* Admin Routes */}
               <Route path="/admin" element={
                 <ProtectedRoute adminOnly={true}>
                   <AdminPanel />
                 </ProtectedRoute>
               } />
-              
-              {/* Public Invitation Route */}
               <Route path="/invitation/:slug" element={<PreviewTemplate />} />
-              
-              {/* Catch-all Route */}
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </SmoothScroll>

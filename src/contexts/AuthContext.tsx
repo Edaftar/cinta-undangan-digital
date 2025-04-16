@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
 
   // Function to check if user is admin
-  const checkAdminStatus = async () => {
+  const checkAdminStatus = async (userId: string) => {
     try {
       setCheckingAdmin(true);
       
@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    // Do not redirect to dashboard automatically when on specific paths
+    // Do not redirect to dashboard automatically when on specific pages
     const noRedirectPaths = [
       '/create',
       '/preview',
@@ -64,23 +64,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return !noRedirectPaths.some(noRedirectPath => path.startsWith(noRedirectPath));
     };
 
-    // Set up auth state listener
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
-        console.log("Auth state changed:", event, currentSession?.user?.email);
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
+      (event, session) => {
+        console.log("Auth state changed:", event, session);
+        setSession(session);
+        setUser(session?.user ?? null);
         
         // Check admin status if user exists
-        if (currentSession?.user) {
-          await checkAdminStatus();
+        if (session?.user) {
+          checkAdminStatus(session.user.id);
         } else {
           setIsAdmin(false);
           setCheckingAdmin(false);
         }
 
         // Only redirect after login, not on every auth state change
-        if (currentSession?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+        if (session?.user && event === 'SIGNED_IN') {
           // Use setTimeout to avoid potential race conditions
           setTimeout(() => {
             if (location.pathname === '/auth/login' || location.pathname === '/auth/signup') {
@@ -93,15 +93,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-    // Check for existing session on initial load
-    supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
-      console.log("Initial session check:", initialSession?.user?.email);
-      setSession(initialSession);
-      setUser(initialSession?.user ?? null);
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session check:", session);
+      setSession(session);
+      setUser(session?.user ?? null);
       
       // Check admin status if user exists
-      if (initialSession?.user) {
-        await checkAdminStatus();
+      if (session?.user) {
+        checkAdminStatus(session.user.id);
       } else {
         setIsAdmin(false);
         setCheckingAdmin(false);
@@ -136,7 +136,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { error, data } = await supabase.auth.signUp({
         email,
         password,
         options: {
