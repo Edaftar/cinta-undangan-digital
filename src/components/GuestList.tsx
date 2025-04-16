@@ -33,12 +33,26 @@ interface Guest {
   created_at: string;
 }
 
-interface GuestListProps {
-  invitationId: string;
-  invitationTitle: string;
+interface Invitation {
+  id: string;
+  title: string;
+  slug: string;
+  template_id: string;
+  bride_name: string;
+  groom_name: string;
+  main_date: string;
+  location: string;
+  active: boolean;
+  created_at: string;
 }
 
-const GuestList = ({ invitationId, invitationTitle }: GuestListProps) => {
+interface GuestListProps {
+  invitationId?: string;
+  invitationTitle?: string;
+  invitations?: Invitation[];
+}
+
+const GuestList = ({ invitationId, invitationTitle, invitations }: GuestListProps) => {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -49,50 +63,72 @@ const GuestList = ({ invitationId, invitationTitle }: GuestListProps) => {
     totalGuests: 0,
   });
   const { user } = useAuth();
+  const [selectedInvitation, setSelectedInvitation] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchGuests = async () => {
-      if (!invitationId) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('guests')
-          .select('*')
-          .eq('invitation_id', invitationId)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        if (data) {
-          setGuests(data as Guest[]);
-          
-          // Calculate stats
-          const attending = data.filter(g => g.attendance_status === 'attending');
-          const notAttending = data.filter(g => g.attendance_status === 'not_attending');
-          const pending = data.filter(g => g.attendance_status === 'pending');
-          const totalGuests = attending.reduce((sum, guest) => sum + (guest.number_of_guests || 1), 0);
-          
-          setStats({
-            total: data.length,
-            attending: attending.length,
-            notAttending: notAttending.length,
-            pending: pending.length,
-            totalGuests,
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching guests:', error);
-        toast.error('Gagal memuat daftar tamu');
-      } finally {
-        setLoading(false);
+    // If single invitation ID is provided, fetch guests for that invitation
+    if (invitationId) {
+      fetchGuestsForInvitation(invitationId);
+    } 
+    // If list of invitations is provided, fetch guests for the first invitation or all
+    else if (invitations && invitations.length > 0) {
+      if (!selectedInvitation) {
+        setSelectedInvitation(invitations[0].id);
+        fetchGuestsForInvitation(invitations[0].id);
+      } else {
+        fetchGuestsForInvitation(selectedInvitation);
       }
-    };
+    } else {
+      setLoading(false);
+    }
+  }, [invitationId, invitations, selectedInvitation]);
 
-    fetchGuests();
-  }, [invitationId]);
+  const fetchGuestsForInvitation = async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('guests')
+        .select('*')
+        .eq('invitation_id', id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        setGuests(data as Guest[]);
+        
+        // Calculate stats
+        const attending = data.filter(g => g.attendance_status === 'attending');
+        const notAttending = data.filter(g => g.attendance_status === 'not_attending');
+        const pending = data.filter(g => g.attendance_status === 'pending');
+        const totalGuests = attending.reduce((sum, guest) => sum + (guest.number_of_guests || 1), 0);
+        
+        setStats({
+          total: data.length,
+          attending: attending.length,
+          notAttending: notAttending.length,
+          pending: pending.length,
+          totalGuests,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching guests:', error);
+      toast.error('Gagal memuat daftar tamu');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const exportToCSV = () => {
     if (guests.length === 0) return;
+
+    // Get the title of the current invitation
+    let title = invitationTitle;
+    if (!title && invitations && selectedInvitation) {
+      const currentInvitation = invitations.find(inv => inv.id === selectedInvitation);
+      if (currentInvitation) {
+        title = currentInvitation.title;
+      }
+    }
 
     // Create CSV content
     const headers = ['Nama', 'Email', 'Telepon', 'Status Kehadiran', 'Jumlah Tamu', 'Pesan', 'Tanggal'];
@@ -121,7 +157,7 @@ const GuestList = ({ invitationId, invitationTitle }: GuestListProps) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `tamu-${invitationTitle.replace(/\s+/g, '-')}.csv`);
+    link.setAttribute('download', `tamu-${title ? title.replace(/\s+/g, '-') : 'undangan'}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -139,6 +175,30 @@ const GuestList = ({ invitationId, invitationTitle }: GuestListProps) => {
     }
   };
 
+  // Render invitation selector if multiple invitations
+  const renderInvitationSelector = () => {
+    if (!invitations || invitations.length <= 1) return null;
+
+    return (
+      <div className="mb-4">
+        <label className="text-sm font-medium text-gray-700 mb-2 block">
+          Pilih Undangan:
+        </label>
+        <select
+          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2"
+          value={selectedInvitation || ''}
+          onChange={(e) => setSelectedInvitation(e.target.value)}
+        >
+          {invitations.map(inv => (
+            <option key={inv.id} value={inv.id}>
+              {inv.title}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <Card>
@@ -148,6 +208,24 @@ const GuestList = ({ invitationId, invitationTitle }: GuestListProps) => {
         </CardHeader>
         <CardContent className="flex justify-center py-6">
           <Loader2 className="h-8 w-8 animate-spin text-wedding-rosegold" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show message if no invitations or no guests
+  if ((!invitationId && (!invitations || invitations.length === 0)) || 
+      (invitations && invitations.length === 0)) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Daftar Tamu</CardTitle>
+          <CardDescription>Tidak ada undangan yang tersedia</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-gray-500">
+            Buat undangan terlebih dahulu untuk melihat daftar tamu
+          </div>
         </CardContent>
       </Card>
     );
@@ -173,6 +251,8 @@ const GuestList = ({ invitationId, invitationTitle }: GuestListProps) => {
         </Button>
       </CardHeader>
       <CardContent>
+        {renderInvitationSelector()}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center">
             <CheckCircle className="h-8 w-8 text-green-500 mr-3" />
