@@ -468,21 +468,23 @@ const IslamicEleganceTemplate = ({ data }: { data: InvitationData }) => {
       </motion.div>
       
       {/* CSS for better Arabic font styling */}
-      <style jsx global>{`
-        .arabic-text {
-          direction: rtl;
-          line-height: 1.8;
-          letter-spacing: 0.5px;
-        }
-        @font-face {
-          font-family: 'Islamic';
-          src: url('https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&display=swap');
-          font-display: swap;
-        }
-        .font-islamic {
-          font-family: 'Scheherazade New', serif;
-        }
-      `}</style>
+      <style>
+        {`
+          .arabic-text {
+            direction: rtl;
+            line-height: 1.8;
+            letter-spacing: 0.5px;
+          }
+          @font-face {
+            font-family: 'Islamic';
+            src: url('https://fonts.googleapis.com/css2?family=Scheherazade+New:wght@400;700&display=swap');
+            font-display: swap;
+          }
+          .font-islamic {
+            font-family: 'Scheherazade New', serif;
+          }
+        `}
+      </style>
     </div>
   );
 };
