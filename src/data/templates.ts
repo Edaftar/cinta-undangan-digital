@@ -1,4 +1,21 @@
 
+export interface Template {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  features: string[];
+  category: string;
+  popular?: boolean;
+}
+
+export const categories = [
+  { id: "all", name: "Semua" },
+  { id: "standard", name: "Standard" },
+  { id: "premium", name: "Premium" },
+  { id: "islamic", name: "Islamic" }
+];
+
 export const templates = [
   {
     id: "elegant-1",
@@ -83,5 +100,19 @@ export const templates = [
       "RSVP digital"
     ],
     category: "premium"
+  },
+  {
+    id: "islamic-2",
+    name: "Islamic Elegance",
+    description: "Template dengan tema Islamic yang elegan dengan ornamen geometris dan kaligrafi modern.",
+    image: "/template-previews/islamic-preview.jpg",
+    features: [
+      "Kaligrafi modern",
+      "Animasi halus",
+      "Ayat-ayat pilihan",
+      "RSVP digital",
+      "Mobile-friendly"
+    ],
+    category: "islamic"
   }
 ];
