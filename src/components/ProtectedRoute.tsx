@@ -21,7 +21,7 @@ export const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRoutePr
   }, [adminOnly, user, isAdmin, checkingAdmin]);
 
   // Show loading state while checking authentication or admin status
-  if (isLoading || (adminOnly && checkingAdmin)) {
+  if (isLoading || (adminOnly && user && checkingAdmin)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-wedding-ivory">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wedding-rosegold"></div>
@@ -31,6 +31,7 @@ export const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRoutePr
 
   // Redirect if not logged in
   if (!user) {
+    console.log("User not authenticated, redirecting to login");
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
