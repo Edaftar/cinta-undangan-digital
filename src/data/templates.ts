@@ -79,7 +79,7 @@ export const templates = [
     category: "modern"
   },
   {
-    id: "jawa-1",
+    id: "traditional-1",
     name: "Javanese Traditional",
     description: "Template dengan tema pernikahan tradisional Jawa yang elegan.",
     image: "/template-previews/javanese-preview.jpg",

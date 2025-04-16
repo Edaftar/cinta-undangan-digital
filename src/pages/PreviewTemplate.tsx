@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import { templates } from "@/data/templates";
@@ -13,6 +12,7 @@ import RusticTemplate from "@/components/templates/RusticTemplate";
 import TraditionalJavaTemplate from "@/components/templates/TraditionalJavaTemplate";
 import ModernGeometryTemplate from "@/components/templates/ModernGeometryTemplate";
 import IslamicOrnamentTemplate from "@/components/templates/IslamicOrnamentTemplate";
+import IslamicEleganceTemplate from "@/components/templates/IslamicEleganceTemplate";
 import RSVP from "@/components/RSVP";
 import { toast } from "sonner";
 import { generateInvitationPDF } from "@/utils/pdfUtils";
@@ -57,7 +57,6 @@ const PreviewTemplate = () => {
   // Get data from location state if available (passed from the form)
   const weddingData = location.state?.weddingData;
 
-  // If we have a slug parameter, fetch invitation from database
   useEffect(() => {
     const fetchInvitationBySlug = async () => {
       if (!slug) return;
@@ -257,6 +256,8 @@ const PreviewTemplate = () => {
         return <ModernGeometryTemplate data={safeDisplayData} />;
       case 'islamic-1':
         return <IslamicOrnamentTemplate data={safeDisplayData} />;
+      case 'islamic-2':
+        return <IslamicEleganceTemplate data={safeDisplayData} />;
       default:
         return <ElegantRoseTemplate data={safeDisplayData} />; // Fallback to elegant template
     }
