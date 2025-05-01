@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,7 +17,7 @@ import { toast } from "sonner";
 import { Menu, X, LayoutDashboard, User, Settings, LogOut } from "lucide-react";
 
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -26,7 +27,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await signOut();
       toast.success("Berhasil keluar");
       navigate("/auth/login");
     } catch (error) {

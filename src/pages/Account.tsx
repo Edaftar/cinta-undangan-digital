@@ -16,7 +16,8 @@ import { motion } from "framer-motion";
 
 type Profile = {
   id: string;
-  full_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
   email: string | null;
   phone: string | null;
   avatar_url: string | null;
@@ -28,7 +29,8 @@ const Account = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [fullName, setFullName] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [lastName, setLastName] = useState<string | null>(null);
   const [phone, setPhone] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
 
@@ -54,7 +56,8 @@ const Account = () => {
             // Create a profile for this user since it doesn't exist
             await supabase.from("profiles").insert({
               id: user.id,
-              full_name: user.user_metadata?.full_name || null,
+              first_name: user.user_metadata?.first_name || null,
+              last_name: user.user_metadata?.last_name || null,
               email: user.email,
             });
             
@@ -66,7 +69,8 @@ const Account = () => {
               .single();
               
             if (newProfile) {
-              setFullName(newProfile.full_name);
+              setFirstName(newProfile.first_name);
+              setLastName(newProfile.last_name);
               setEmail(newProfile.email);
               setPhone(newProfile.phone);
               setAvatarUrl(newProfile.avatar_url);
@@ -75,7 +79,8 @@ const Account = () => {
             throw error;
           }
         } else if (profile) {
-          setFullName(profile.full_name);
+          setFirstName(profile.first_name);
+          setLastName(profile.last_name);
           setEmail(profile.email);
           setPhone(profile.phone);
           setAvatarUrl(profile.avatar_url);
@@ -101,7 +106,8 @@ const Account = () => {
       const { error } = await supabase
         .from("profiles")
         .update({
-          full_name: fullName,
+          first_name: firstName,
+          last_name: lastName,
           phone: phone,
         })
         .eq("id", user.id);
@@ -129,6 +135,8 @@ const Account = () => {
       </div>
     );
   }
+
+  const fullName = [firstName, lastName].filter(Boolean).join(' ');
 
   return (
     <div className="min-h-screen flex flex-col bg-wedding-ivory">
@@ -160,14 +168,27 @@ const Account = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="fullName" className="flex items-center">
+                <Label htmlFor="firstName" className="flex items-center">
                   <User className="w-4 h-4 mr-2" />
-                  Nama Lengkap
+                  Nama Depan
                 </Label>
                 <Input
-                  id="fullName"
-                  value={fullName || ""}
-                  onChange={(e) => setFullName(e.target.value)}
+                  id="firstName"
+                  value={firstName || ""}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="border-wedding-champagne focus-visible:ring-wedding-rosegold"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="lastName" className="flex items-center">
+                  <User className="w-4 h-4 mr-2" />
+                  Nama Belakang
+                </Label>
+                <Input
+                  id="lastName"
+                  value={lastName || ""}
+                  onChange={(e) => setLastName(e.target.value)}
                   className="border-wedding-champagne focus-visible:ring-wedding-rosegold"
                 />
               </div>
