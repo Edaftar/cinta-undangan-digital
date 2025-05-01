@@ -217,6 +217,7 @@ const PreviewTemplate = () => {
     );
   }
 
+  // For template gallery preview - show template not found if no template and no slug
   if (!template && !slug) {
     return (
       <div className="min-h-screen flex flex-col bg-wedding-ivory">
@@ -256,7 +257,78 @@ const PreviewTemplate = () => {
     );
   }
 
-  if (!displayData && slug) {
+  // This block handles both cases: template browsing (no data yet) and slug viewing (missing data)
+  if (!displayData) {
+    // For browsing templates with no data, create a placeholder
+    if (templateId && !slug) {
+      // We're just viewing a template from the gallery, show a default preview
+      const placeholderData = {
+        bride_name: "Nama Pengantin Wanita",
+        groom_name: "Nama Pengantin Pria",
+        main_date: new Date().toISOString(),
+        location: "Nama Lokasi Pernikahan",
+        location_address: "Alamat Lengkap Lokasi",
+        love_story: "Cerita cinta kami dimulai...",
+        gallery: []
+      };
+      
+      // Recursively call the same component with placeholder data
+      return (
+        <div className="min-h-screen flex flex-col bg-wedding-ivory">
+          <Navbar />
+          <main className="flex-grow py-8">
+            <div className="container mx-auto px-4">
+              <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                <Button
+                  variant="outline"
+                  className="border-wedding-rosegold text-wedding-rosegold hover:bg-wedding-light-blush"
+                  asChild
+                >
+                  <Link to="/templates">
+                    <ChevronLeft size={16} className="mr-1" />
+                    Kembali ke Galeri Template
+                  </Link>
+                </Button>
+              </div>
+              
+              <div className="text-center mb-8">
+                <h1 className="text-3xl md:text-4xl font-bold mb-2 font-playfair">Pratinjau Template</h1>
+                <p className="text-gray-600 max-w-2xl mx-auto">
+                  Ini adalah tampilan contoh dari template {template?.name}
+                </p>
+              </div>
+              
+              <div id="invitation-container" className="mx-auto max-w-4xl mb-8">
+                {getTemplateComponent(currentTemplateId, placeholderData)}
+              </div>
+              
+              <div className="text-center space-y-6 max-w-2xl mx-auto">
+                <div className="p-6 bg-wedding-light-blush rounded-lg shadow-sm">
+                  <Heart className="text-wedding-rosegold mx-auto mb-3" fill="#D8A7B1" />
+                  <p className="text-gray-700">
+                    Ini adalah pratinjau template. Untuk membuat undangan yang sesungguhnya, silakan isi form dengan data pernikahan Anda.
+                  </p>
+                </div>
+                
+                <div className="space-y-4 pt-4">
+                  <Button 
+                    className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white px-8"
+                    asChild
+                  >
+                    <Link to={`/create/${currentTemplateId}`}>
+                      Buat Undangan
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </main>
+          <Footer />
+        </div>
+      );
+    }
+
+    // For actual invitations with slug but missing data
     return (
       <div className="min-h-screen flex flex-col bg-wedding-ivory">
         <Navbar />
@@ -295,9 +367,9 @@ const PreviewTemplate = () => {
     );
   }
 
-  const getTemplateComponent = () => {
-    // Make sure displayData exists before trying to render a template
-    if (!displayData) {
+  const getTemplateComponent = (templateId?: string, data?: any) => {
+    // Make sure data exists before trying to render a template
+    if (!data) {
       return (
         <div className="p-8 text-center">
           <p>Data undangan tidak tersedia</p>
@@ -306,34 +378,34 @@ const PreviewTemplate = () => {
     }
     
     // Fix: Make sure we normalize gallery data to avoid undefined values
-    const safeDisplayData = {
-      ...displayData,
+    const safeData = {
+      ...data,
       // Make sure gallery exists and is an array
-      gallery: Array.isArray(displayData?.gallery) ? displayData.gallery : []
+      gallery: Array.isArray(data.gallery) ? data.gallery : []
     };
     
-    console.log("Template being rendered:", currentTemplateId);
-    console.log("With data:", safeDisplayData);
+    console.log("Template being rendered:", templateId);
+    console.log("With data:", safeData);
     
-    switch(currentTemplateId) {
+    switch(templateId) {
       case 'elegant-1':
-        return <ElegantRoseTemplate data={safeDisplayData} />;
+        return <ElegantRoseTemplate data={safeData} />;
       case 'minimalist-1':
-        return <MinimalistTemplate data={safeDisplayData} />;
+        return <MinimalistTemplate data={safeData} />;
       case 'rustic-1':
-        return <RusticTemplate data={safeDisplayData} />;
+        return <RusticTemplate data={safeData} />;
       case 'traditional-1':
       case 'jawa-1':
-        return <TraditionalJavaTemplate data={safeDisplayData} />;
+        return <TraditionalJavaTemplate data={safeData} />;
       case 'modern-1':
-        return <ModernGeometryTemplate data={safeDisplayData} />;
+        return <ModernGeometryTemplate data={safeData} />;
       case 'islamic-1':
       case 'islamic-2':
-        return <IslamicOrnamentTemplate data={safeDisplayData} />;
+        return <IslamicOrnamentTemplate data={safeData} />;
       case 'elegance-white':
-        return <EleganceWhiteTemplate data={safeDisplayData} />;
+        return <EleganceWhiteTemplate data={safeData} />;
       default:
-        return <ElegantRoseTemplate data={safeDisplayData} />; // Fallback to elegant template
+        return <ElegantRoseTemplate data={safeData} />; // Fallback to elegant template
     }
   };
 
@@ -342,7 +414,7 @@ const PreviewTemplate = () => {
     return (
       <div className="relative">
         {music && <MusicPlayer audioUrl={music.url} title={music.title} artist={music.artist} autoplay={true} iconOnly={true} />}
-        <div id="invitation-container">{getTemplateComponent()}</div>
+        <div id="invitation-container">{getTemplateComponent(currentTemplateId, displayData)}</div>
         
         {/* Add RSVP section for public invitations */}
         <section className="py-16 px-4 bg-wedding-ivory">
@@ -438,7 +510,7 @@ const PreviewTemplate = () => {
                 />
               </div>
             )}
-            {getTemplateComponent()}
+            {getTemplateComponent(currentTemplateId, displayData)}
           </motion.div>
           
           <motion.div 
