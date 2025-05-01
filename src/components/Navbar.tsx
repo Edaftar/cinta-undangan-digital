@@ -1,210 +1,223 @@
-
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "./ui/button";
-import { Menu, X, ChevronDown, User } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { toast } from "sonner";
+import { Menu, X, LayoutDashboard, User, Settings, LogOut } from "lucide-react";
 
-const Navbar: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const { user, isAdmin, signOut } = useAuth();
-  const location = useLocation();
+const Navbar = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const toggleMenu = () => setIsOpen(!isOpen);
-  const closeMenu = () => setIsOpen(false);
-
-  const isActive = (path: string) => {
-    return location.pathname === path;
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
   };
 
-  const navLinks = [
-    { name: "Home", path: "/" },
-    { name: "Templates", path: "/templates" },
-    { name: "Pricing", path: "/pricing" },
-    { name: "About", path: "/about" },
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Berhasil keluar");
+      navigate("/auth/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      toast.error("Gagal keluar");
+    }
+  };
+
+  const userMenuItems = [
+    {
+      label: "Dashboard",
+      href: "/dashboard",
+      icon: <LayoutDashboard className="mr-2 h-4 w-4" />,
+    },
+    {
+      label: "Akun Saya",
+      href: "/account",
+      icon: <User className="mr-2 h-4 w-4" />,
+    },
+    {
+      label: "Profil",
+      href: "/profile",
+      icon: <Settings className="mr-2 h-4 w-4" />,
+    },
+    {
+      label: "Keluar",
+      onClick: handleLogout,
+      icon: <LogOut className="mr-2 h-4 w-4" />,
+    },
   ];
 
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-playfair font-bold text-wedding-sage">
-              Untuk<span className="text-wedding-rosegold">SelamaNYA</span>
-            </span>
-          </Link>
+    <nav className="bg-wedding-ivory border-b border-wedding-champagne">
+      <div className="container max-w-6xl py-4 px-4 lg:px-0 mx-auto flex items-center justify-between">
+        <Link to="/" className="text-xl font-semibold text-gray-800 font-playfair">
+          Wedding Invitation
+        </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`text-gray-600 hover:text-wedding-rosegold transition-colors ${
-                  isActive(link.path)
-                    ? "text-wedding-rosegold font-medium"
-                    : ""
-                }`}
-                onClick={closeMenu}
-              >
-                {link.name}
-              </Link>
-            ))}
-          </div>
+        <div className="hidden lg:flex items-center space-x-6">
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              `text-gray-600 hover:text-gray-800 ${isActive ? "font-semibold" : ""}`
+            }
+          >
+            Beranda
+          </NavLink>
+          <NavLink
+            to="/templates"
+            className={({ isActive }) =>
+              `text-gray-600 hover:text-gray-800 ${isActive ? "font-semibold" : ""}`
+            }
+          >
+            Template
+          </NavLink>
+          <NavLink
+            to="/about"
+            className={({ isActive }) =>
+              `text-gray-600 hover:text-gray-800 ${isActive ? "font-semibold" : ""}`
+            }
+          >
+            Tentang Kami
+          </NavLink>
+          <NavLink
+            to="/pricing"
+            className={({ isActive }) =>
+              `text-gray-600 hover:text-gray-800 ${isActive ? "font-semibold" : ""}`
+            }
+          >
+            Harga
+          </NavLink>
+          <NavLink
+            to="/blog"
+            className={({ isActive }) =>
+              `text-gray-600 hover:text-gray-800 ${isActive ? "font-semibold" : ""}`
+            }
+          >
+            Blog
+          </NavLink>
+        </div>
 
-          {/* Auth Buttons - Desktop */}
-          <div className="hidden md:flex items-center space-x-4">
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="border-wedding-rosegold text-wedding-rosegold hover:bg-wedding-light-blush"
-                  >
-                    <User className="mr-2 h-4 w-4" />
-                    Account
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile">Profile Settings</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/dashboard">Dashboard</Link>
-                  </DropdownMenuItem>
-                  {isAdmin && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin">Admin Panel</Link>
+        {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user.user_metadata?.avatar_url || ""} alt={user.user_metadata?.full_name || "Profile"} />
+                  <AvatarFallback className="bg-wedding-sage text-white">
+                    {user.user_metadata?.full_name?.charAt(0).toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              {userMenuItems.map((item, index) => (
+                <React.Fragment key={index}>
+                  {item.label === "Keluar" ? (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={item.onClick} className="cursor-pointer">
+                        {item.icon}
+                        {item.label}
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <DropdownMenuItem className="cursor-pointer" asChild>
+                      <Link to={item.href}>
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-red-500 cursor-pointer"
-                    onClick={signOut}
-                  >
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <>
-                <Button asChild variant="outline">
-                  <Link to="/auth/login">Sign In</Link>
-                </Button>
-                <Button
-                  asChild
-                  className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold"
-                >
-                  <Link to="/auth/signup">Create Account</Link>
-                </Button>
-              </>
-            )}
-          </div>
-
-          {/* Mobile menu button */}
-          <button
-            onClick={toggleMenu}
-            className="md:hidden text-gray-500 focus:outline-none"
-          >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Navigation */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white"
-          >
-            <div className="container mx-auto px-4 py-3 flex flex-col space-y-3">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`block py-2 text-gray-600 hover:text-wedding-rosegold transition-colors ${
-                    isActive(link.path)
-                      ? "text-wedding-rosegold font-medium"
-                      : ""
-                  }`}
-                  onClick={closeMenu}
-                >
-                  {link.name}
-                </Link>
+                </React.Fragment>
               ))}
-              <div className="pt-3 border-t border-gray-200">
-                {user ? (
-                  <>
-                    <Link
-                      to="/profile"
-                      className="block py-2 text-gray-600 hover:text-wedding-rosegold"
-                      onClick={closeMenu}
-                    >
-                      Profile Settings
-                    </Link>
-                    <Link
-                      to="/dashboard"
-                      className="block py-2 text-gray-600 hover:text-wedding-rosegold"
-                      onClick={closeMenu}
-                    >
-                      Dashboard
-                    </Link>
-                    {isAdmin && (
-                      <Link
-                        to="/admin"
-                        className="block py-2 text-gray-600 hover:text-wedding-rosegold"
-                        onClick={closeMenu}
-                      >
-                        Admin Panel
-                      </Link>
-                    )}
-                    <button
-                      onClick={() => {
-                        signOut();
-                        closeMenu();
-                      }}
-                      className="block w-full text-left py-2 text-red-500 hover:text-red-700"
-                    >
-                      Logout
-                    </button>
-                  </>
-                ) : (
-                  <div className="flex flex-col space-y-2">
-                    <Button asChild variant="outline">
-                      <Link to="/auth/login" onClick={closeMenu}>
-                        Sign In
-                      </Link>
-                    </Button>
-                    <Button
-                      asChild
-                      className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold"
-                    >
-                      <Link to="/auth/signup" onClick={closeMenu}>
-                        Create Account
-                      </Link>
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </motion.div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <div className="hidden lg:flex items-center space-x-4">
+            <Link to="/auth/login" className="text-gray-600 hover:text-gray-800">
+              Masuk
+            </Link>
+            <Link
+              to="/auth/signup"
+              className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white py-2 px-4 rounded-md transition-colors"
+            >
+              Daftar
+            </Link>
+          </div>
         )}
-      </AnimatePresence>
+
+        <Sheet>
+          <SheetTrigger className="lg:hidden">
+            <Button variant="ghost" className="p-2">
+              <Menu className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="sm:w-2/3 md:w-1/2">
+            <SheetHeader className="space-y-2 text-left">
+              <SheetTitle>Menu</SheetTitle>
+              <SheetDescription>Explore and navigate through our options.</SheetDescription>
+            </SheetHeader>
+            <div className="grid gap-4 py-4">
+              <NavLink to="/" className="block text-gray-600 hover:text-gray-800 py-2">
+                Beranda
+              </NavLink>
+              <NavLink to="/templates" className="block text-gray-600 hover:text-gray-800 py-2">
+                Template
+              </NavLink>
+              <NavLink to="/about" className="block text-gray-600 hover:text-gray-800 py-2">
+                Tentang Kami
+              </NavLink>
+              <NavLink to="/pricing" className="block text-gray-600 hover:text-gray-800 py-2">
+                Harga
+              </NavLink>
+              <NavLink to="/blog" className="block text-gray-600 hover:text-gray-800 py-2">
+                Blog
+              </NavLink>
+              {user ? (
+                <>
+                  {userMenuItems.map((item, index) => (
+                    <React.Fragment key={index}>
+                      {item.label === "Keluar" ? (
+                        <Button variant="ghost" className="w-full justify-start" onClick={item.onClick}>
+                          {item.icon}
+                          {item.label}
+                        </Button>
+                      ) : (
+                        <Button variant="ghost" className="w-full justify-start" asChild>
+                          <Link to={item.href}>
+                            {item.icon}
+                            <span>{item.label}</span>
+                          </Link>
+                        </Button>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <Link to="/auth/login" className="block text-gray-600 hover:text-gray-800 py-2">
+                    Masuk
+                  </Link>
+                  <Link to="/auth/signup" className="block bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white py-2 px-4 rounded-md transition-colors">
+                    Daftar
+                  </Link>
+                </>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
     </nav>
   );
 };

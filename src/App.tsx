@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import Dashboard from "./pages/Dashboard";
+import Account from "./pages/Account";
 import About from "./pages/About";
 import Pricing from "./pages/Pricing";
 import AdminPanel from "./pages/AdminPanel";
@@ -48,6 +49,11 @@ const App = () => (
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <UserProfile />
+                </ProtectedRoute>
+              } />
+              <Route path="/account" element={
+                <ProtectedRoute>
+                  <Account />
                 </ProtectedRoute>
               } />
               <Route path="/create/:templateId" element={
