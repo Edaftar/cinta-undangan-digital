@@ -59,6 +59,49 @@ const PreviewTemplate = () => {
   // Get data from location state if available (passed from the form)
   const weddingData = location.state?.weddingData;
 
+  // Define the getTemplateComponent function earlier in the file
+  const getTemplateComponent = (templateId?: string, data?: any) => {
+    // Make sure data exists before trying to render a template
+    if (!data) {
+      return (
+        <div className="p-8 text-center">
+          <p>Data undangan tidak tersedia</p>
+        </div>
+      );
+    }
+    
+    // Fix: Make sure we normalize gallery data to avoid undefined values
+    const safeData = {
+      ...data,
+      // Make sure gallery exists and is an array
+      gallery: Array.isArray(data.gallery) ? data.gallery : []
+    };
+    
+    console.log("Template being rendered:", templateId);
+    console.log("With data:", safeData);
+    
+    switch(templateId) {
+      case 'elegant-1':
+        return <ElegantRoseTemplate data={safeData} />;
+      case 'minimalist-1':
+        return <MinimalistTemplate data={safeData} />;
+      case 'rustic-1':
+        return <RusticTemplate data={safeData} />;
+      case 'traditional-1':
+      case 'jawa-1':
+        return <TraditionalJavaTemplate data={safeData} />;
+      case 'modern-1':
+        return <ModernGeometryTemplate data={safeData} />;
+      case 'islamic-1':
+      case 'islamic-2':
+        return <IslamicOrnamentTemplate data={safeData} />;
+      case 'elegance-white':
+        return <EleganceWhiteTemplate data={safeData} />;
+      default:
+        return <ElegantRoseTemplate data={safeData} />; // Fallback to elegant template
+    }
+  };
+
   // If we have a slug parameter, fetch invitation from database
   useEffect(() => {
     const fetchInvitationBySlug = async () => {
@@ -366,48 +409,6 @@ const PreviewTemplate = () => {
       </div>
     );
   }
-
-  const getTemplateComponent = (templateId?: string, data?: any) => {
-    // Make sure data exists before trying to render a template
-    if (!data) {
-      return (
-        <div className="p-8 text-center">
-          <p>Data undangan tidak tersedia</p>
-        </div>
-      );
-    }
-    
-    // Fix: Make sure we normalize gallery data to avoid undefined values
-    const safeData = {
-      ...data,
-      // Make sure gallery exists and is an array
-      gallery: Array.isArray(data.gallery) ? data.gallery : []
-    };
-    
-    console.log("Template being rendered:", templateId);
-    console.log("With data:", safeData);
-    
-    switch(templateId) {
-      case 'elegant-1':
-        return <ElegantRoseTemplate data={safeData} />;
-      case 'minimalist-1':
-        return <MinimalistTemplate data={safeData} />;
-      case 'rustic-1':
-        return <RusticTemplate data={safeData} />;
-      case 'traditional-1':
-      case 'jawa-1':
-        return <TraditionalJavaTemplate data={safeData} />;
-      case 'modern-1':
-        return <ModernGeometryTemplate data={safeData} />;
-      case 'islamic-1':
-      case 'islamic-2':
-        return <IslamicOrnamentTemplate data={safeData} />;
-      case 'elegance-white':
-        return <EleganceWhiteTemplate data={safeData} />;
-      default:
-        return <ElegantRoseTemplate data={safeData} />; // Fallback to elegant template
-    }
-  };
 
   // If we're viewing a public invitation by slug, show only the template without navigation
   if (slug && displayData) {
