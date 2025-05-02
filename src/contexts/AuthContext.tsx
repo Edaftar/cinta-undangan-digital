@@ -27,8 +27,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Function to check if user is admin
-  const checkAdminStatus = async (userId: string) => {
+  // Function to check if user is admin using the is_admin RPC function
+  const checkAdminStatus = async () => {
     try {
       setCheckingAdmin(true);
       
@@ -73,7 +73,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         // Check admin status if user exists
         if (session?.user) {
-          checkAdminStatus(session.user.id);
+          // Use setTimeout to avoid any potential race conditions
+          setTimeout(() => {
+            checkAdminStatus();
+          }, 100);
         } else {
           setIsAdmin(false);
           setCheckingAdmin(false);
@@ -101,7 +104,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Check admin status if user exists
       if (session?.user) {
-        checkAdminStatus(session.user.id);
+        checkAdminStatus();
       } else {
         setIsAdmin(false);
         setCheckingAdmin(false);

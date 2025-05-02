@@ -10,11 +10,8 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRouteProps) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isAdmin } = useAuth();
   const location = useLocation();
-
-  // Check if user is admin based on email
-  const isAdmin = user?.email === 'admin@admin.com';
 
   useEffect(() => {
     // Show toast if user is trying to access admin-only route but is not admin

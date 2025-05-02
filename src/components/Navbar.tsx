@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { Menu, X, LayoutDashboard, User, Settings, LogOut } from "lucide-react";
 
 const Navbar = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -63,7 +63,7 @@ const Navbar = () => {
     <nav className="bg-wedding-ivory border-b border-wedding-champagne shadow-sm">
       <div className="container max-w-6xl py-4 px-4 lg:px-0 mx-auto flex items-center justify-between">
         <Link to="/" className="text-2xl font-bold text-gray-800 font-great-vibes">
-          Wedding<span className="text-wedding-rosegold">Invitation</span>
+          Selama<span className="text-wedding-rosegold">NYA</span>
         </Link>
 
         <div className="hidden lg:flex items-center space-x-8">
