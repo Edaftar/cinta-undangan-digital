@@ -60,17 +60,17 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="bg-wedding-ivory border-b border-wedding-champagne">
+    <nav className="bg-wedding-ivory border-b border-wedding-champagne shadow-sm">
       <div className="container max-w-6xl py-4 px-4 lg:px-0 mx-auto flex items-center justify-between">
-        <Link to="/" className="text-xl font-semibold text-gray-800 font-playfair">
-          Wedding Invitation
+        <Link to="/" className="text-2xl font-bold text-gray-800 font-great-vibes">
+          Wedding<span className="text-wedding-rosegold">Invitation</span>
         </Link>
 
-        <div className="hidden lg:flex items-center space-x-6">
+        <div className="hidden lg:flex items-center space-x-8">
           <NavLink
             to="/"
             className={({ isActive }) =>
-              `text-gray-600 hover:text-gray-800 ${isActive ? "font-semibold" : ""}`
+              `text-gray-600 hover:text-gray-800 navbar-link ${isActive ? "font-semibold after:w-full" : ""}`
             }
           >
             Beranda
@@ -78,7 +78,7 @@ const Navbar = () => {
           <NavLink
             to="/templates"
             className={({ isActive }) =>
-              `text-gray-600 hover:text-gray-800 ${isActive ? "font-semibold" : ""}`
+              `text-gray-600 hover:text-gray-800 navbar-link ${isActive ? "font-semibold after:w-full" : ""}`
             }
           >
             Template
@@ -86,7 +86,7 @@ const Navbar = () => {
           <NavLink
             to="/about"
             className={({ isActive }) =>
-              `text-gray-600 hover:text-gray-800 ${isActive ? "font-semibold" : ""}`
+              `text-gray-600 hover:text-gray-800 navbar-link ${isActive ? "font-semibold after:w-full" : ""}`
             }
           >
             Tentang Kami
@@ -94,7 +94,7 @@ const Navbar = () => {
           <NavLink
             to="/pricing"
             className={({ isActive }) =>
-              `text-gray-600 hover:text-gray-800 ${isActive ? "font-semibold" : ""}`
+              `text-gray-600 hover:text-gray-800 navbar-link ${isActive ? "font-semibold after:w-full" : ""}`
             }
           >
             Harga
@@ -102,38 +102,48 @@ const Navbar = () => {
           <NavLink
             to="/blog"
             className={({ isActive }) =>
-              `text-gray-600 hover:text-gray-800 ${isActive ? "font-semibold" : ""}`
+              `text-gray-600 hover:text-gray-800 navbar-link ${isActive ? "font-semibold after:w-full" : ""}`
             }
           >
             Blog
           </NavLink>
+          {user?.email === 'admin@admin.com' && (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) =>
+                `text-wedding-rosegold hover:text-wedding-deep-rosegold navbar-link ${isActive ? "font-semibold after:w-full" : ""}`
+              }
+            >
+              Admin
+            </NavLink>
+          )}
         </div>
 
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 rounded-full">
+              <Button variant="ghost" className="h-9 w-9 rounded-full p-0 border border-wedding-champagne/50 hover:bg-wedding-light-blush">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={user.user_metadata?.avatar_url || ""} alt={user.user_metadata?.full_name || "Profile"} />
-                  <AvatarFallback className="bg-wedding-sage text-white">
-                    {user.user_metadata?.full_name?.charAt(0).toUpperCase() || "U"}
+                  <AvatarFallback className="bg-wedding-rosegold text-white">
+                    {user.user_metadata?.first_name?.charAt(0).toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuContent className="w-56 bg-white/90 backdrop-blur-sm border border-wedding-champagne/50" align="end" forceMount>
               {userMenuItems.map((item, index) => (
                 <React.Fragment key={index}>
                   {item.label === "Keluar" ? (
                     <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={item.onClick} className="cursor-pointer">
+                      <DropdownMenuSeparator className="bg-wedding-champagne/30" />
+                      <DropdownMenuItem onClick={item.onClick} className="cursor-pointer hover:bg-wedding-light-blush">
                         {item.icon}
                         {item.label}
                       </DropdownMenuItem>
                     </>
                   ) : (
-                    <DropdownMenuItem className="cursor-pointer" asChild>
+                    <DropdownMenuItem className="cursor-pointer hover:bg-wedding-light-blush" asChild>
                       <Link to={item.href}>
                         {item.icon}
                         <span>{item.label}</span>
@@ -146,12 +156,12 @@ const Navbar = () => {
           </DropdownMenu>
         ) : (
           <div className="hidden lg:flex items-center space-x-4">
-            <Link to="/auth/login" className="text-gray-600 hover:text-gray-800">
+            <Link to="/auth/login" className="text-gray-600 hover:text-gray-800 navbar-link">
               Masuk
             </Link>
             <Link
               to="/auth/signup"
-              className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white py-2 px-4 rounded-md transition-colors"
+              className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white py-2 px-4 rounded-md transition-colors shadow-sm hover:shadow-md"
             >
               Daftar
             </Link>
@@ -164,27 +174,34 @@ const Navbar = () => {
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="sm:w-2/3 md:w-1/2">
+          <SheetContent side="right" className="sm:w-2/3 md:w-1/2 bg-white/95 backdrop-blur-sm border-l border-wedding-champagne/30">
             <SheetHeader className="space-y-2 text-left">
-              <SheetTitle>Menu</SheetTitle>
-              <SheetDescription>Explore and navigate through our options.</SheetDescription>
+              <SheetTitle className="font-great-vibes text-2xl">Menu</SheetTitle>
+              <SheetDescription>
+                Explore and navigate through our options.
+              </SheetDescription>
             </SheetHeader>
-            <div className="grid gap-4 py-4">
-              <NavLink to="/" className="block text-gray-600 hover:text-gray-800 py-2">
+            <div className="grid gap-4 py-6">
+              <NavLink to="/" className="block text-gray-600 hover:text-gray-800 py-2 border-b border-wedding-champagne/20">
                 Beranda
               </NavLink>
-              <NavLink to="/templates" className="block text-gray-600 hover:text-gray-800 py-2">
+              <NavLink to="/templates" className="block text-gray-600 hover:text-gray-800 py-2 border-b border-wedding-champagne/20">
                 Template
               </NavLink>
-              <NavLink to="/about" className="block text-gray-600 hover:text-gray-800 py-2">
+              <NavLink to="/about" className="block text-gray-600 hover:text-gray-800 py-2 border-b border-wedding-champagne/20">
                 Tentang Kami
               </NavLink>
-              <NavLink to="/pricing" className="block text-gray-600 hover:text-gray-800 py-2">
+              <NavLink to="/pricing" className="block text-gray-600 hover:text-gray-800 py-2 border-b border-wedding-champagne/20">
                 Harga
               </NavLink>
-              <NavLink to="/blog" className="block text-gray-600 hover:text-gray-800 py-2">
+              <NavLink to="/blog" className="block text-gray-600 hover:text-gray-800 py-2 border-b border-wedding-champagne/20">
                 Blog
               </NavLink>
+              {user?.email === 'admin@admin.com' && (
+                <NavLink to="/admin" className="block text-wedding-rosegold hover:text-wedding-deep-rosegold py-2 border-b border-wedding-champagne/20">
+                  Admin
+                </NavLink>
+              )}
               {user ? (
                 <>
                   {userMenuItems.map((item, index) => (

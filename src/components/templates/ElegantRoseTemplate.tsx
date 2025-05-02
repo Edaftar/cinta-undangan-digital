@@ -60,44 +60,48 @@ const ElegantRoseTemplate = ({ data, isPreview = false }: ElegantRoseTemplatePro
   return (
     <div className="w-full max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
       {/* Cover Section */}
-      <div className="relative h-[50vh] md:h-[70vh] bg-gradient-to-b from-wedding-champagne/40 to-wedding-ivory flex items-center justify-center">
-        <div className="absolute inset-0 bg-[url('/placeholder.svg')] bg-cover bg-center opacity-20"></div>
-        <div className="relative z-10 text-center p-6">
-          <p className="font-dancing text-3xl md:text-4xl text-wedding-rosegold mb-4">Undangan Pernikahan</p>
-          <h1 className="font-playfair text-4xl md:text-6xl font-bold mb-6 text-wedding-text">
-            {weddingData.brideName} &amp; {weddingData.groomName}
+      <div className="relative h-[60vh] md:h-[80vh] bg-gradient-to-b from-wedding-champagne/20 to-white flex items-center justify-center">
+        <div className="absolute inset-0 bg-elegant-pattern bg-[url('/placeholder.svg')] bg-cover bg-center opacity-20"></div>
+        <div className="relative z-10 text-center p-6 animate-fade-in">
+          <p className="font-great-vibes text-4xl md:text-5xl text-wedding-rosegold mb-6">Undangan Pernikahan</p>
+          <h1 className="font-cormorant text-5xl md:text-7xl font-light mb-8 text-wedding-text tracking-wide">
+            {weddingData.brideName} <span className="font-great-vibes text-wedding-rosegold">&</span> {weddingData.groomName}
           </h1>
-          <p className="text-xl md:text-2xl text-wedding-text mb-8">
+          <p className="text-xl md:text-2xl text-wedding-text mb-8 font-cormorant tracking-wider">
             {weddingData.akadDate && format(weddingData.akadDate, "dd.MM.yyyy", { locale: id })}
           </p>
-          <div className="w-32 h-1 bg-wedding-rosegold mx-auto"></div>
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-16 h-0.5 bg-wedding-rosegold"></div>
+            <Heart size={24} className="text-wedding-rosegold fill-wedding-rosegold" />
+            <div className="w-16 h-0.5 bg-wedding-rosegold"></div>
+          </div>
         </div>
       </div>
 
       {/* Couple Section */}
-      <section className="py-16 px-6 bg-wedding-ivory">
+      <section className="py-20 px-6 bg-wedding-ivory">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="font-playfair text-3xl md:text-4xl font-bold mb-10 text-wedding-text">Mempelai</h2>
+          <h2 className="font-great-vibes text-4xl md:text-5xl font-normal mb-12 text-wedding-rosegold">Mempelai</h2>
           
-          <div className="grid md:grid-cols-2 gap-12 md:gap-20">
-            <div className="space-y-6">
-              <div className="w-48 h-48 mx-auto rounded-full overflow-hidden border-4 border-wedding-rosegold">
-                <img src={safePhotos[0]?.url || "/placeholder.svg"} alt="Bride" className="w-full h-full object-cover" />
+          <div className="grid md:grid-cols-2 gap-16 md:gap-24">
+            <div className="space-y-6 transform transition duration-500 hover:scale-105">
+              <div className="w-52 h-52 mx-auto rounded-full overflow-hidden border-4 border-wedding-rosegold shadow-lg p-1">
+                <img src={safePhotos[0]?.url || "/placeholder.svg"} alt="Bride" className="w-full h-full object-cover rounded-full" />
               </div>
               <div>
-                <h3 className="font-playfair text-2xl font-semibold text-wedding-rosegold">{weddingData.brideFullName}</h3>
-                <p className="mt-2 text-wedding-text">{weddingData.brideParents}</p>
+                <h3 className="font-cormorant text-3xl font-semibold text-wedding-rosegold">{weddingData.brideFullName}</h3>
+                <p className="mt-2 text-wedding-text font-light italic">{weddingData.brideParents}</p>
                 {weddingData.brideBio && <p className="mt-4 italic text-gray-600">{weddingData.brideBio}</p>}
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="w-48 h-48 mx-auto rounded-full overflow-hidden border-4 border-wedding-rosegold">
-                <img src={safePhotos[1]?.url || "/placeholder.svg"} alt="Groom" className="w-full h-full object-cover" />
+            <div className="space-y-6 transform transition duration-500 hover:scale-105">
+              <div className="w-52 h-52 mx-auto rounded-full overflow-hidden border-4 border-wedding-rosegold shadow-lg p-1">
+                <img src={safePhotos[1]?.url || "/placeholder.svg"} alt="Groom" className="w-full h-full object-cover rounded-full" />
               </div>
               <div>
-                <h3 className="font-playfair text-2xl font-semibold text-wedding-rosegold">{weddingData.groomFullName}</h3>
-                <p className="mt-2 text-wedding-text">{weddingData.groomParents}</p>
+                <h3 className="font-cormorant text-3xl font-semibold text-wedding-rosegold">{weddingData.groomFullName}</h3>
+                <p className="mt-2 text-wedding-text font-light italic">{weddingData.groomParents}</p>
                 {weddingData.groomBio && <p className="mt-4 italic text-gray-600">{weddingData.groomBio}</p>}
               </div>
             </div>
@@ -106,53 +110,53 @@ const ElegantRoseTemplate = ({ data, isPreview = false }: ElegantRoseTemplatePro
       </section>
 
       {/* Events Section */}
-      <section className="py-16 px-6 bg-white relative">
+      <section className="py-20 px-6 bg-white relative">
         <div className="absolute top-0 left-0 w-full h-16 bg-wedding-ivory" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 0)" }}></div>
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="font-playfair text-3xl md:text-4xl font-bold mb-12 text-wedding-text">Acara</h2>
+          <h2 className="font-great-vibes text-4xl md:text-5xl font-normal mb-16 text-wedding-rosegold">Acara</h2>
           
-          <div className="grid md:grid-cols-2 gap-12 md:gap-20">
-            <div className="bg-wedding-light-blush p-8 rounded-lg shadow-md space-y-6">
-              <h3 className="font-playfair text-2xl font-semibold text-wedding-text">Akad Nikah</h3>
-              <div className="flex items-center justify-center gap-2">
+          <div className="grid md:grid-cols-2 gap-12 md:gap-24">
+            <div className="bg-gradient-to-br from-wedding-light-blush to-white p-8 rounded-lg shadow-md space-y-6 border border-wedding-champagne/30 transform transition duration-500 hover:-translate-y-2 hover:shadow-lg">
+              <h3 className="font-cormorant text-3xl font-semibold text-wedding-text">Akad Nikah</h3>
+              <div className="flex items-center justify-center gap-3">
                 <CalendarCheck size={20} className="text-wedding-rosegold" />
-                <p>
+                <p className="font-cormorant text-lg">
                   {weddingData.akadDate && format(weddingData.akadDate, "EEEE, dd MMMM yyyy", { locale: id })}
                 </p>
               </div>
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-3">
                 <Clock size={20} className="text-wedding-rosegold" />
-                <p>
+                <p className="font-cormorant text-lg">
                   {weddingData.akadDate && format(weddingData.akadDate, "HH.mm", { locale: id })} WIB
                 </p>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-3">
                   <MapPin size={20} className="text-wedding-rosegold" />
-                  <p className="font-medium">{weddingData.akadLocation}</p>
+                  <p className="font-medium font-cormorant text-lg">{weddingData.akadLocation}</p>
                 </div>
                 <p className="text-sm text-gray-600">{weddingData.akadAddress}</p>
               </div>
             </div>
 
-            <div className="bg-wedding-light-blush p-8 rounded-lg shadow-md space-y-6">
-              <h3 className="font-playfair text-2xl font-semibold text-wedding-text">Resepsi</h3>
-              <div className="flex items-center justify-center gap-2">
+            <div className="bg-gradient-to-br from-wedding-light-blush to-white p-8 rounded-lg shadow-md space-y-6 border border-wedding-champagne/30 transform transition duration-500 hover:-translate-y-2 hover:shadow-lg">
+              <h3 className="font-cormorant text-3xl font-semibold text-wedding-text">Resepsi</h3>
+              <div className="flex items-center justify-center gap-3">
                 <CalendarCheck size={20} className="text-wedding-rosegold" />
-                <p>
+                <p className="font-cormorant text-lg">
                   {weddingData.receptionDate && format(weddingData.receptionDate, "EEEE, dd MMMM yyyy", { locale: id })}
                 </p>
               </div>
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-3">
                 <Clock size={20} className="text-wedding-rosegold" />
-                <p>
+                <p className="font-cormorant text-lg">
                   {weddingData.receptionDate && format(weddingData.receptionDate, "HH.mm", { locale: id })} WIB
                 </p>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-3">
                   <MapPin size={20} className="text-wedding-rosegold" />
-                  <p className="font-medium">{weddingData.receptionLocation}</p>
+                  <p className="font-medium font-cormorant text-lg">{weddingData.receptionLocation}</p>
                 </div>
                 <p className="text-sm text-gray-600">{weddingData.receptionAddress}</p>
               </div>
@@ -163,16 +167,16 @@ const ElegantRoseTemplate = ({ data, isPreview = false }: ElegantRoseTemplatePro
 
       {/* Gallery Section */}
       {safePhotos.length > 0 && (
-        <section className="py-16 px-6 bg-wedding-ivory">
+        <section className="py-20 px-6 bg-wedding-ivory">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="font-playfair text-3xl md:text-4xl font-bold mb-10 text-wedding-text">Galeri</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <h2 className="font-great-vibes text-4xl md:text-5xl font-normal mb-16 text-wedding-rosegold">Galeri</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
               {safePhotos.map((photo) => (
-                <div key={photo.id} className="aspect-square overflow-hidden rounded-lg shadow-md">
+                <div key={photo.id} className="aspect-square overflow-hidden rounded-lg shadow-md group">
                   <img 
                     src={photo.url} 
                     alt="Foto Prewedding" 
-                    className="w-full h-full object-cover transition-transform hover:scale-110 duration-300"
+                    className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
                   />
                 </div>
               ))}
@@ -183,15 +187,15 @@ const ElegantRoseTemplate = ({ data, isPreview = false }: ElegantRoseTemplatePro
 
       {/* Love Story Section */}
       {weddingData.loveStory && (
-        <section className="py-16 px-6 bg-white">
+        <section className="py-20 px-6 bg-white">
           <div className="max-w-2xl mx-auto text-center">
-            <h2 className="font-playfair text-3xl md:text-4xl font-bold mb-10 text-wedding-text flex items-center justify-center gap-3">
-              <Heart size={24} fill="#D8A7B1" className="text-wedding-rosegold" />
+            <h2 className="font-great-vibes text-4xl md:text-5xl font-normal mb-16 text-wedding-rosegold flex items-center justify-center gap-4">
+              <Heart size={24} fill="#E8B4BD" className="text-wedding-rosegold" />
               <span>Kisah Cinta</span>
-              <Heart size={24} fill="#D8A7B1" className="text-wedding-rosegold" />
+              <Heart size={24} fill="#E8B4BD" className="text-wedding-rosegold" />
             </h2>
-            <div className="bg-wedding-light-blush p-8 rounded-lg shadow-md">
-              <p className="text-gray-700 leading-relaxed font-light italic">
+            <div className="bg-gradient-to-br from-wedding-light-blush to-white p-8 rounded-lg shadow-md border border-wedding-champagne/30">
+              <p className="text-gray-700 leading-relaxed font-light italic font-cormorant text-xl">
                 "{weddingData.loveStory}"
               </p>
             </div>
@@ -200,10 +204,10 @@ const ElegantRoseTemplate = ({ data, isPreview = false }: ElegantRoseTemplatePro
       )}
 
       {/* Footer */}
-      <section className="py-12 px-6 bg-wedding-deep-rosegold text-white text-center">
-        <h2 className="font-dancing text-3xl md:text-4xl mb-6">Terima Kasih</h2>
-        <p className="font-playfair text-xl">
-          {weddingData.brideName} &amp; {weddingData.groomName}
+      <section className="py-16 px-6 bg-gradient-to-r from-wedding-rosegold to-wedding-deep-rosegold text-white text-center">
+        <h2 className="font-great-vibes text-4xl md:text-5xl mb-6">Terima Kasih</h2>
+        <p className="font-cormorant text-2xl">
+          {weddingData.brideName} <span className="font-great-vibes">&</span> {weddingData.groomName}
         </p>
       </section>
     </div>

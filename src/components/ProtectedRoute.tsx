@@ -10,18 +10,21 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRouteProps) => {
-  const { user, isLoading, isAdmin, checkingAdmin } = useAuth();
+  const { user, isLoading } = useAuth();
   const location = useLocation();
+
+  // Check if user is admin based on email
+  const isAdmin = user?.email === 'admin@admin.com';
 
   useEffect(() => {
     // Show toast if user is trying to access admin-only route but is not admin
-    if (adminOnly && user && !isAdmin && !checkingAdmin) {
+    if (adminOnly && user && !isAdmin) {
       toast.error("Anda tidak memiliki akses ke halaman ini");
     }
-  }, [adminOnly, user, isAdmin, checkingAdmin]);
+  }, [adminOnly, user, isAdmin]);
 
-  // Show loading state while checking authentication or admin status
-  if (isLoading || (adminOnly && user && checkingAdmin)) {
+  // Show loading state while checking authentication
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-wedding-ivory">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wedding-rosegold"></div>
@@ -37,7 +40,7 @@ export const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRoutePr
 
   // Only check admin status if the route requires admin privileges
   if (adminOnly && !isAdmin) {
-    console.log("Admin access denied. isAdmin:", isAdmin);
+    console.log("Admin access denied");
     return <Navigate to="/dashboard" replace />;
   }
 

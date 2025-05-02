@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Great+Vibes&family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,7 +7,7 @@
 
 @layer base {
   :root {
-    --background: 40 30% 98%;
+    --background: 36 33% 97%;
     --foreground: 0 0% 29%;
 
     --card: 0 0% 100%;
@@ -16,16 +16,16 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 29%;
 
-    --primary: 351 55% 92%;
+    --primary: 351 65% 85%;
     --primary-foreground: 0 0% 29%;
 
-    --secondary: 39 69% 89%;
+    --secondary: 39 75% 85%;
     --secondary-foreground: 0 0% 29%;
 
     --muted: 120 23% 86%;
     --muted-foreground: 0 0% 45%;
 
-    --accent: 348 33% 69%;
+    --accent: 348 43% 69%;
     --accent-foreground: 0 0% 98%;
 
     --destructive: 0 84.2% 60.2%;
@@ -33,18 +33,18 @@
 
     --border: 120 23% 86%;
     --input: 120 23% 86%;
-    --ring: 348 33% 69%;
+    --ring: 348 43% 69%;
 
-    --radius: 0.5rem;
+    --radius: 0.7rem;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 0 0% 29%;
-    --sidebar-primary: 348 33% 69%;
+    --sidebar-primary: 348 43% 69%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 120 23% 86%;
     --sidebar-accent-foreground: 0 0% 29%;
     --sidebar-border: 120 23% 86%;
-    --sidebar-ring: 348 33% 69%;
+    --sidebar-ring: 348 43% 69%;
   }
 }
 
@@ -55,6 +55,7 @@
 
   body {
     @apply bg-background text-foreground font-montserrat;
+    background-image: linear-gradient(109.6deg, rgba(223,234,247,0.2) 11.2%, rgba(244,248,252,0.2) 91.1%);
   }
   
   h1, h2, h3, h4, h5, h6 {
@@ -64,33 +65,41 @@
   .cursive {
     @apply font-dancing;
   }
+  
+  .elegant-cursive {
+    @apply font-great-vibes;
+  }
+  
+  .elegant-serif {
+    @apply font-cormorant;
+  }
 
   /* Fix for date picker visibility */
   .rdp {
-    --rdp-accent-color: #D8A7B1 !important;
-    --rdp-background-color: #F8E8EA !important;
+    --rdp-accent-color: #E8B4BD !important;
+    --rdp-background-color: #F9EEF0 !important;
   }
   
   .rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
-    background-color: #F8E8EA !important;
+    background-color: #F9EEF0 !important;
     color: #4A4A4A !important;
   }
   
   .rdp-day_selected, 
   .rdp-day_selected:hover,
   .rdp-day_selected:focus {
-    background-color: #D8A7B1 !important;
+    background-color: #E8B4BD !important;
     color: white !important;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white font-medium py-3 px-6 rounded-lg transition-all duration-300;
+    @apply bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5;
   }
   
   .btn-secondary {
-    @apply bg-wedding-champagne hover:bg-opacity-80 text-wedding-text font-medium py-3 px-6 rounded-lg transition-all duration-300;
+    @apply bg-wedding-champagne hover:bg-opacity-90 text-wedding-text font-medium py-3 px-6 rounded-lg transition-all duration-300 shadow-sm hover:shadow-md transform hover:-translate-y-0.5;
   }
   
   .card-hover {
@@ -99,11 +108,11 @@
 
   /* Settings page styling improvements */
   .settings-panel {
-    @apply bg-white rounded-lg shadow-sm p-6;
+    @apply bg-white rounded-lg shadow-md p-6 border border-wedding-champagne/20;
   }
   
   .settings-heading {
-    @apply text-xl font-semibold mb-4 text-gray-700;
+    @apply text-xl font-semibold mb-4 text-gray-700 font-playfair;
   }
   
   .settings-form-group {
@@ -115,6 +124,27 @@
   }
   
   .settings-input {
-    @apply border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-wedding-rosegold;
+    @apply border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-wedding-rosegold;
+  }
+  
+  .navbar-link {
+    @apply relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-wedding-rosegold after:transition-all after:duration-300 hover:after:w-full;
+  }
+  
+  .page-title {
+    @apply text-3xl font-bold mb-6 font-playfair text-gray-800 relative;
+  }
+  
+  .page-title::after {
+    @apply content-[''] absolute -bottom-2 left-0 h-1 w-24 bg-wedding-rosegold rounded-full;
+  }
+  
+  .gradient-heading {
+    @apply font-great-vibes text-transparent bg-clip-text bg-gradient-to-r from-wedding-rosegold to-wedding-deep-rosegold;
+  }
+  
+  .card-elegant {
+    @apply bg-white rounded-lg shadow-md overflow-hidden border border-wedding-champagne/30 hover:shadow-lg transition-all duration-300;
   }
 }
+
