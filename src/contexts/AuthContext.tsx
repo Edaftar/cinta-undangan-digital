@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setCheckingAdmin(true);
       
-      // Call the is_admin function
+      // Call the is_admin function directly using RPC
       const { data, error } = await supabase.rpc('is_admin');
       
       if (error) {

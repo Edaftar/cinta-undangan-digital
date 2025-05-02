@@ -107,7 +107,7 @@ const Navbar = () => {
           >
             Blog
           </NavLink>
-          {user?.email === 'admin@admin.com' && (
+          {isAdmin && (
             <NavLink
               to="/admin"
               className={({ isActive }) =>
@@ -133,8 +133,8 @@ const Navbar = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 bg-white/90 backdrop-blur-sm border border-wedding-champagne/50" align="end" forceMount>
               {userMenuItems.map((item, index) => (
-                <React.Fragment key={index}>
-                  {item.label === "Keluar" ? (
+                React.createElement(React.Fragment, { key: index }, 
+                  item.label === "Keluar" ? (
                     <>
                       <DropdownMenuSeparator className="bg-wedding-champagne/30" />
                       <DropdownMenuItem onClick={item.onClick} className="cursor-pointer hover:bg-wedding-light-blush">
@@ -149,8 +149,8 @@ const Navbar = () => {
                         <span>{item.label}</span>
                       </Link>
                     </DropdownMenuItem>
-                  )}
-                </React.Fragment>
+                  )
+                )
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -197,7 +197,7 @@ const Navbar = () => {
               <NavLink to="/blog" className="block text-gray-600 hover:text-gray-800 py-2 border-b border-wedding-champagne/20">
                 Blog
               </NavLink>
-              {user?.email === 'admin@admin.com' && (
+              {isAdmin && (
                 <NavLink to="/admin" className="block text-wedding-rosegold hover:text-wedding-deep-rosegold py-2 border-b border-wedding-champagne/20">
                   Admin
                 </NavLink>
@@ -205,8 +205,8 @@ const Navbar = () => {
               {user ? (
                 <>
                   {userMenuItems.map((item, index) => (
-                    <React.Fragment key={index}>
-                      {item.label === "Keluar" ? (
+                    React.createElement(React.Fragment, { key: index }, 
+                      item.label === "Keluar" ? (
                         <Button variant="ghost" className="w-full justify-start" onClick={item.onClick}>
                           {item.icon}
                           {item.label}
@@ -218,8 +218,8 @@ const Navbar = () => {
                             <span>{item.label}</span>
                           </Link>
                         </Button>
-                      )}
-                    </React.Fragment>
+                      )
+                    )
                   ))}
                 </>
               ) : (

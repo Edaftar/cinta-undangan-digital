@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import DashboardHeader from "@/components/DashboardHeader";
 import {
   Tabs,
   TabsContent,
@@ -49,12 +51,17 @@ import {
   MusicIcon,
   LineChart,
   Settings,
-  ImageIcon
+  ImageIcon,
+  BarChart2,
+  PieChart,
+  CalendarIcon
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import MusicManager from "@/components/admin/MusicManager";
 import ImageManager from "@/components/admin/ImageManager";
+import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 
 interface User {
   id: string;
@@ -97,10 +104,14 @@ interface Invitation {
   slug?: string;
 }
 
+interface ChartData {
+  name: string;
+  value: number;
+}
+
 const AdminPanel = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [isAdmin, setIsAdmin] = useState(false);
   const [adminLoading, setAdminLoading] = useState(true);
   
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -114,37 +125,16 @@ const AdminPanel = () => {
   const [dashboard, setDashboard] = useState({
     totalUsers: 0,
     totalInvitations: 0,
-    activeInvitations: 0
+    activeInvitations: 0,
+    newUsersThisMonth: 0,
+    activeSubscriptions: 0
   });
+
+  const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [invitationsByMonth, setInvitationsByMonth] = useState<{name: string, count: number}[]>([]);
   
-  // Check if user is admin
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (!user) {
-        setAdminLoading(false);
-        return;
-      }
-
-      try {
-        // Check if user has admin role
-        const { data, error } = await supabase
-          .from("roles")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("role", "admin")
-          .single();
-
-        setIsAdmin(!!data);
-      } catch (error: any) {
-        console.error("Error checking admin status:", error.message);
-        toast.error("Failed to verify admin privileges");
-      } finally {
-        setAdminLoading(false);
-      }
-    };
-
-    checkAdminStatus();
-  }, [user]);
+  // Chart colors
+  const COLORS = ['#FF8042', '#00C49F', '#FFBB28', '#FF8042', '#0088FE'];
 
   // Apply smooth scrolling to the whole page
   useEffect(() => {
@@ -160,8 +150,32 @@ const AdminPanel = () => {
   // Fetch data for admin dashboard
   useEffect(() => {
     const fetchAdminData = async () => {
-      if (!isAdmin) return;
+      if (!user) {
+        setAdminLoading(false);
+        return;
+      }
       
+      // First, check if user is admin using the is_admin RPC function
+      try {
+        const { data: isAdminResult, error: isAdminError } = await supabase.rpc('is_admin');
+        
+        if (isAdminError) {
+          console.error("Error checking admin status:", isAdminError.message);
+          setAdminLoading(false);
+          return;
+        }
+        
+        // If not admin, stop loading
+        if (!isAdminResult) {
+          setAdminLoading(false);
+          return;
+        }
+      } catch (error: any) {
+        console.error("Error checking admin status:", error.message);
+        setAdminLoading(false);
+        return;
+      }
+
       setLoadingData(true);
       try {
         // Fetch users/profiles
@@ -173,10 +187,18 @@ const AdminPanel = () => {
         if (profilesError) throw profilesError;
         setProfiles(profilesData || []);
         
+        // Calculate new users this month
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const newUsersCount = profilesData?.filter(
+          profile => new Date(profile.created_at) >= firstDayOfMonth
+        ).length || 0;
+        
         // Update dashboard stats
         setDashboard(prev => ({
           ...prev,
-          totalUsers: profilesData?.length || 0
+          totalUsers: profilesData?.length || 0,
+          newUsersThisMonth: newUsersCount
         }));
 
         // Fetch subscriptions with user info
@@ -193,7 +215,7 @@ const AdminPanel = () => {
             .from("profiles")
             .select("email, first_name, last_name")
             .eq("id", sub.user_id)
-            .single();
+            .maybeSingle();
           
           return {
             ...sub,
@@ -205,6 +227,15 @@ const AdminPanel = () => {
         }));
         
         setSubscriptions(enhancedSubs);
+        
+        // Count active subscriptions
+        const activeSubscriptionsCount = enhancedSubs.filter(sub => sub.status === 'active').length;
+        
+        // Update dashboard stats
+        setDashboard(prev => ({
+          ...prev,
+          activeSubscriptions: activeSubscriptionsCount
+        }));
 
         // Fetch invitations with user info
         const { data: invitationsData, error: invitationsError } = await supabase
@@ -220,7 +251,7 @@ const AdminPanel = () => {
             .from("profiles")
             .select("email")
             .eq("id", invitation.user_id)
-            .single();
+            .maybeSingle();
           
           return {
             ...invitation,
@@ -236,16 +267,45 @@ const AdminPanel = () => {
           totalInvitations: enhancedInvitations.length || 0,
           activeInvitations: enhancedInvitations.filter(inv => inv.active).length || 0
         }));
+
+        // Generate chart data for template breakdown
+        const templateCounts: Record<string, number> = {};
+        enhancedInvitations.forEach(invitation => {
+          const templateName = invitation.template_id;
+          templateCounts[templateName] = (templateCounts[templateName] || 0) + 1;
+        });
+        
+        const templateChartData = Object.entries(templateCounts).map(([name, value]) => ({
+          name,
+          value
+        }));
+        
+        setChartData(templateChartData);
+
+        // Generate invitations by month
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const invitationsByMonthData = Array(12).fill(0).map((_, idx) => ({
+          name: months[idx],
+          count: 0
+        }));
+        
+        enhancedInvitations.forEach(invitation => {
+          const month = new Date(invitation.created_at).getMonth();
+          invitationsByMonthData[month].count += 1;
+        });
+        
+        setInvitationsByMonth(invitationsByMonthData);
       } catch (error: any) {
         console.error("Error fetching admin data:", error.message);
         toast.error("Failed to load admin data");
       } finally {
+        setAdminLoading(false);
         setLoadingData(false);
       }
     };
 
     fetchAdminData();
-  }, [isAdmin]);
+  }, [user]);
 
   const toggleInvitationStatus = async (invitation: Invitation) => {
     try {
@@ -281,7 +341,7 @@ const AdminPanel = () => {
     setViewDialogOpen(true);
   };
 
-  if (isLoading || adminLoading) {
+  if (adminLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-wedding-ivory">
         <Loader2 className="h-12 w-12 animate-spin text-wedding-rosegold" />
@@ -312,7 +372,7 @@ const AdminPanel = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-gray-600 mb-6 text-center"
+            className="text-center text-gray-600 mb-6"
           >
             You don't have permission to access the admin panel.
           </motion.p>
@@ -344,38 +404,15 @@ const AdminPanel = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">Admin Panel</h1>
-              <p className="text-gray-600">Manage your wedding platform from here</p>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setSheetOpen(true)}
-                className="border-wedding-sage text-wedding-sage hover:bg-wedding-sage/10"
-              >
-                <Settings size={16} className="mr-1" />
-                Settings
-              </Button>
-              
-              <Button
-                variant="outline"
-                className="border-wedding-rosegold text-wedding-rosegold hover:bg-wedding-light-blush"
-                asChild
-              >
-                <a href="/">
-                  <ChevronLeft size={16} className="mr-1" />
-                  Back to Home
-                </a>
-              </Button>
-            </div>
-          </div>
+          <DashboardHeader 
+            title="Admin Panel" 
+            description="Manage your wedding platform from here"
+            showCreateButton={false}
+          />
 
-          {/* Dashboard Stats */}
+          {/* Enhanced Dashboard Stats with Animation */}
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"
+            className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
@@ -385,6 +422,7 @@ const AdminPanel = () => {
                 <div>
                   <p className="text-blue-600 font-medium">Total Users</p>
                   <h3 className="text-2xl font-bold mt-1">{dashboard.totalUsers}</h3>
+                  <p className="text-xs text-blue-500 mt-1">+{dashboard.newUsersThisMonth} this month</p>
                 </div>
                 <div className="bg-blue-100 p-2 rounded-full">
                   <Users className="text-blue-500" size={20} />
@@ -397,6 +435,7 @@ const AdminPanel = () => {
                 <div>
                   <p className="text-green-600 font-medium">Active Invitations</p>
                   <h3 className="text-2xl font-bold mt-1">{dashboard.activeInvitations}</h3>
+                  <p className="text-xs text-green-500 mt-1">of {dashboard.totalInvitations} total</p>
                 </div>
                 <div className="bg-green-100 p-2 rounded-full">
                   <Mail className="text-green-500" size={20} />
@@ -415,12 +454,122 @@ const AdminPanel = () => {
                 </div>
               </div>
             </div>
+
+            <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-6 rounded-lg shadow-sm">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-amber-600 font-medium">Active Subscriptions</p>
+                  <h3 className="text-2xl font-bold mt-1">{dashboard.activeSubscriptions}</h3>
+                </div>
+                <div className="bg-amber-100 p-2 rounded-full">
+                  <CreditCard className="text-amber-500" size={20} />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-rose-50 to-rose-100 p-6 rounded-lg shadow-sm">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-rose-600 font-medium">Next Event</p>
+                  <h3 className="text-xl font-bold mt-1">
+                    {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                  </h3>
+                </div>
+                <div className="bg-rose-100 p-2 rounded-full">
+                  <CalendarIcon className="text-rose-500" size={20} />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Data Visualization Section */}
+          <motion.div 
+            className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+          >
+            {/* Bar Chart - Invitations by Month */}
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-800">Invitations Created by Month</h2>
+                <BarChart2 size={20} className="text-gray-500" />
+              </div>
+              
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={invitationsByMonth}
+                    margin={{
+                      top: 5,
+                      right: 30,
+                      left: 20,
+                      bottom: 5,
+                    }}
+                  >
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <RechartsTooltip 
+                      formatter={(value) => [`${value} invitations`, 'Count']}
+                      labelFormatter={(label) => `Month: ${label}`}
+                    />
+                    <Bar dataKey="count" fill="#8884d8" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            
+            {/* Pie Chart - Template Usage */}
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-800">Template Usage Distribution</h2>
+                <PieChart size={20} className="text-gray-500" />
+              </div>
+              
+              <div className="h-80 flex flex-col">
+                <div className="flex-grow">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip 
+                        formatter={(value) => [`${value} invitations`, 'Count']}
+                      />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </div>
+                
+                <div className="flex flex-wrap justify-center gap-3 pt-2">
+                  {chartData.map((entry, index) => (
+                    <div key={`legend-${index}`} className="flex items-center">
+                      <div 
+                        className="w-3 h-3 mr-1 rounded-full" 
+                        style={{backgroundColor: COLORS[index % COLORS.length]}}
+                      />
+                      <span className="text-xs text-gray-600">{entry.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
           >
             <Tabs defaultValue="invitations" className="space-y-6">
               <TabsList className="grid w-full md:w-auto md:inline-flex grid-cols-5 h-auto">
@@ -514,8 +663,7 @@ const AdminPanel = () => {
                         </TableBody>
                       </Table>
                     </div>
-                  )
-                }
+                  )}
                 </div>
               </TabsContent>
 
@@ -574,8 +722,7 @@ const AdminPanel = () => {
                         </TableBody>
                       </Table>
                     </div>
-                  )
-                }
+                  )}
                 </div>
               </TabsContent>
 
@@ -646,8 +793,7 @@ const AdminPanel = () => {
                         </TableBody>
                       </Table>
                     </div>
-                  )
-                }
+                  )}
                 </div>
               </TabsContent>
 
@@ -672,7 +818,6 @@ const AdminPanel = () => {
 
       {/* View Invitation Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Invitation Details</DialogTitle>
@@ -754,7 +899,6 @@ const AdminPanel = () => {
 
       {/* Settings Sidebar */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        
         <SheetContent className="w-full sm:max-w-md bg-wedding-ivory">
           <SheetHeader className="pb-4">
             <SheetTitle>Admin Settings</SheetTitle>
@@ -790,11 +934,11 @@ const AdminPanel = () => {
               <h3 className="font-medium text-lg mb-3">Currently Logged In As</h3>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-wedding-rosegold rounded-full flex items-center justify-center text-white font-medium">
-                  A
+                  {user?.email?.charAt(0).toUpperCase() || "A"}
                 </div>
                 <div>
-                  <p className="font-medium">Admin</p>
-                  <p className="text-xs text-gray-500">admin@admin.com</p>
+                  <p className="font-medium">{user?.email?.split("@")[0] || "Admin"}</p>
+                  <p className="text-xs text-gray-500">{user?.email || "admin@admin.com"}</p>
                 </div>
               </div>
             </div>
