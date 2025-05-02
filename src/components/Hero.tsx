@@ -2,14 +2,21 @@
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Hero = () => {
+  const { user } = useAuth();
+  
   return (
     <div className="relative bg-gradient-to-b from-wedding-light-blush to-wedding-ivory py-16 md:py-24">
-      <div className="container mx-auto px-4">
+      <div 
+        className="absolute inset-0 bg-elegant-pattern opacity-30 z-0"
+        aria-hidden="true"
+      />
+      <div className="container mx-auto px-4 relative z-10">
         <div className="flex flex-col md:flex-row gap-10 items-center">
           <div className="md:w-1/2 space-y-6 animate-fade-in">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-wedding-text leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-wedding-text leading-tight font-cormorant">
               Buat Undangan Pernikahan Digital yang Indah
             </h1>
             <p className="text-lg text-gray-600 max-w-md">
@@ -17,16 +24,16 @@ const Hero = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Button 
-                className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white px-8 py-6 text-lg flex items-center"
+                className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white px-8 py-6 text-lg flex items-center shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
                 asChild
               >
-                <Link to="/templates">
-                  Buat Undangan <ArrowRight size={18} className="ml-2" />
+                <Link to={user ? "/dashboard" : "/templates"}>
+                  {user ? "Dashboard Saya" : "Buat Undangan"} <ArrowRight size={18} className="ml-2" />
                 </Link>
               </Button>
               <Button 
                 variant="outline" 
-                className="border-wedding-rosegold text-wedding-rosegold hover:bg-wedding-light-blush px-8 py-6 text-lg"
+                className="border-wedding-rosegold text-wedding-rosegold hover:bg-wedding-light-blush px-8 py-6 text-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1"
                 asChild
               >
                 <Link to="/templates">
@@ -60,8 +67,14 @@ const Hero = () => {
           <div className="md:w-1/2 flex justify-center animate-fade-in">
             <div className="relative w-full max-w-md">
               <div className="bg-white rounded-2xl shadow-xl p-4 transform rotate-3 animate-float">
-                <div className="aspect-[9/16] bg-wedding-champagne rounded-lg flex items-center justify-center">
-                  <p className="text-xl font-dancing text-wedding-rosegold">Preview Undangan</p>
+                <div className="aspect-[9/16] bg-wedding-champagne rounded-lg flex items-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-elegant-pattern opacity-20"></div>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                    <h3 className="text-2xl font-great-vibes text-wedding-deep-rosegold mb-2">Ratna & Budi</h3>
+                    <p className="font-cormorant text-wedding-text">Minggu, 17 Agustus 2025</p>
+                    <div className="w-16 h-0.5 bg-wedding-rosegold my-3"></div>
+                    <p className="font-cormorant text-sm text-gray-600">Menunggu kehadiran Anda di hari bahagia kami</p>
+                  </div>
                 </div>
               </div>
               <div className="absolute top-4 -left-4 -z-10 bg-wedding-blush rounded-2xl shadow-lg p-4 transform -rotate-6">
