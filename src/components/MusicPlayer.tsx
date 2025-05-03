@@ -6,32 +6,43 @@ import { Slider } from "@/components/ui/slider";
 import { extractYoutubeId, extractSpotifyId } from "@/utils/musicUtils";
 
 interface MusicPlayerProps {
-  musicUrl: string;
+  musicUrl?: string;
+  audioUrl?: string;  // Added for backward compatibility
+  title?: string;
+  artist?: string;
   autoplay?: boolean;
   initialMuted?: boolean;
+  iconOnly?: boolean;
 }
 
 const MusicPlayer: React.FC<MusicPlayerProps> = ({
   musicUrl,
+  audioUrl,
+  title,
+  artist,
   autoplay = false,
   initialMuted = false,
+  iconOnly = false,
 }) => {
+  // Use audioUrl as fallback if musicUrl is not provided
+  const audioSource = musicUrl || audioUrl;
+  
   const [isPlaying, setIsPlaying] = useState(autoplay);
   const [isMuted, setIsMuted] = useState(initialMuted);
   const [volume, setVolume] = useState(70);
   const [showVolumeControl, setShowVolumeControl] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const youtubeId = extractYoutubeId(musicUrl);
-  const spotifyId = extractSpotifyId(musicUrl);
+  const youtubeId = audioSource ? extractYoutubeId(audioSource) : null;
+  const spotifyId = audioSource ? extractSpotifyId(audioSource) : null;
   const isExternalPlayer = !!(youtubeId || spotifyId);
 
   useEffect(() => {
-    if (!isExternalPlayer && musicUrl) {
+    if (!isExternalPlayer && audioSource) {
       if (!audioRef.current) {
-        audioRef.current = new Audio(musicUrl);
+        audioRef.current = new Audio(audioSource);
         audioRef.current.loop = true;
       } else {
-        audioRef.current.src = musicUrl;
+        audioRef.current.src = audioSource;
       }
 
       audioRef.current.volume = volume / 100;
@@ -52,7 +63,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
         audioRef.current.src = '';
       }
     };
-  }, [musicUrl, autoplay, isMuted]);
+  }, [audioSource, autoplay, isMuted]);
 
   const togglePlay = () => {
     if (isExternalPlayer) {
@@ -87,7 +98,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
     }
   };
 
-  if (!musicUrl) {
+  if (!audioSource) {
     return null;
   }
 
@@ -103,7 +114,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
           {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
         </Button>
 
-        {showVolumeControl && (
+        {showVolumeControl && !iconOnly && (
           <div className="w-24 mx-2">
             <Slider
               value={[volume]}
@@ -124,10 +135,17 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
           <Music size={18} />
         </Button>
 
-        {!isExternalPlayer && (
+        {!isExternalPlayer && !iconOnly && (
           <span className="text-xs text-gray-500 ml-1 hidden sm:inline">
             {isPlaying ? "Musik dimainkan" : "Musik dihentikan"}
           </span>
+        )}
+        
+        {(title || artist) && !iconOnly && (
+          <div className="ml-2 hidden sm:block">
+            <div className="text-xs font-medium">{title}</div>
+            {artist && <div className="text-xs text-gray-500">{artist}</div>}
+          </div>
         )}
       </div>
 
