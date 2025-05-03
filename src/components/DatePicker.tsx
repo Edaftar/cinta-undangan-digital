@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 interface DatePickerProps {
   id?: string;
   selected: Date | undefined;
-  onChange: (date: Date) => void;
+  onChange: (date: Date | undefined) => void;  // Updated to handle undefined
   placeholder?: string;
   isClearable?: boolean;
   className?: string;
@@ -34,13 +34,15 @@ export default function DatePicker({
     setDate(newDate);
     if (newDate) {
       onChange(newDate);
+    } else if (isClearable) {
+      onChange(undefined);
     }
   };
 
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
     setDate(undefined);
-    onChange(undefined as any);
+    onChange(undefined);
   };
 
   return (
@@ -74,6 +76,7 @@ export default function DatePicker({
           selected={date}
           onSelect={handleSelect}
           initialFocus
+          className="pointer-events-auto"
         />
       </PopoverContent>
     </Popover>

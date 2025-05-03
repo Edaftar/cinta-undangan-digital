@@ -1,7 +1,7 @@
 
 import React from "react";
 import { format } from "date-fns";
-import { idID } from "date-fns/locale";
+import { id } from "date-fns/locale";
 import MusicPlayer from "@/components/MusicPlayer";
 
 interface ClassicGoldTemplateProps {
@@ -50,7 +50,7 @@ const ClassicGoldTemplate = ({ data }: ClassicGoldTemplateProps) => {
           </h1>
           <div className="mb-6 w-32 h-1 mx-auto" style={{ backgroundColor: goldColor }}></div>
           <p className="text-xl">
-            {format(mainDate, "EEEE, dd MMMM yyyy", { locale: idID })}
+            {format(mainDate, "EEEE, dd MMMM yyyy", { locale: id })}
           </p>
         </div>
       </section>
@@ -124,7 +124,7 @@ const ClassicGoldTemplate = ({ data }: ClassicGoldTemplateProps) => {
                 Wedding Ceremony
               </h3>
               <p className="text-lg mb-2">
-                {format(mainDate, "EEEE, dd MMMM yyyy", { locale: idID })}
+                {format(mainDate, "EEEE, dd MMMM yyyy", { locale: id })}
               </p>
               <p className="mb-4">{format(mainDate, "HH:mm")} WIB</p>
               <p>{data.location}</p>
@@ -138,7 +138,7 @@ const ClassicGoldTemplate = ({ data }: ClassicGoldTemplateProps) => {
                   Akad Nikah
                 </h3>
                 <p className="text-lg mb-2">
-                  {format(new Date(data.akad_date), "EEEE, dd MMMM yyyy", { locale: idID })}
+                  {format(new Date(data.akad_date), "EEEE, dd MMMM yyyy", { locale: id })}
                 </p>
                 <p className="mb-4">{format(new Date(data.akad_date), "HH:mm")} WIB</p>
                 <p>{data.location}</p>
@@ -152,7 +152,7 @@ const ClassicGoldTemplate = ({ data }: ClassicGoldTemplateProps) => {
                   Reception
                 </h3>
                 <p className="text-lg mb-2">
-                  {format(new Date(data.reception_date), "EEEE, dd MMMM yyyy", { locale: idID })}
+                  {format(new Date(data.reception_date), "EEEE, dd MMMM yyyy", { locale: id })}
                 </p>
                 <p className="mb-4">{format(new Date(data.reception_date), "HH:mm")} WIB</p>
                 <p>{data.location}</p>

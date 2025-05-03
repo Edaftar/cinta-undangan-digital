@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import DatePicker from "./DatePicker";
 import ImageUpload from "./ImageUpload";
-import MusicSelector from "./MusicSelector"; // Import the MusicSelector component
+import MusicSelector from "./MusicSelector";
 
 interface TemplateFormProps {
   templateId: string;
@@ -154,6 +154,11 @@ const TemplateForm = ({ templateId, existingData = null }: TemplateFormProps) =>
     setSlug(newSlug);
   };
 
+  // Fixed: Handle image upload properly with correct typing
+  const handleUploadedPhotosChange = (urls: string[]) => {
+    setUploadedPhotos(urls);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-8 bg-white rounded-lg shadow-md p-6">
       <div className="space-y-4">
@@ -258,23 +263,23 @@ const TemplateForm = ({ templateId, existingData = null }: TemplateFormProps) =>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="groomPhoto">Foto Mempelai Pria</Label>
-              <ImageUpload
-                id="groomPhoto"
-                value={groomPhoto}
-                onChange={(url) => setGroomPhoto(url)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="bridePhoto">Foto Mempelai Wanita</Label>
-              <ImageUpload
-                id="bridePhoto"
-                value={bridePhoto}
-                onChange={(url) => setBridePhoto(url)}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="groomPhoto">Foto Mempelai Pria</Label>
+            <ImageUpload
+              id="groomPhoto"
+              value={groomPhoto}
+              onChange={(url) => setGroomPhoto(url)}
+            />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="bridePhoto">Foto Mempelai Wanita</Label>
+            <ImageUpload
+              id="bridePhoto"
+              value={bridePhoto}
+              onChange={(url) => setBridePhoto(url)}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -307,8 +312,8 @@ const TemplateForm = ({ templateId, existingData = null }: TemplateFormProps) =>
             <DatePicker
               id="akadDate"
               selected={akadDate}
-              onChange={(date: Date) => setAkadDate(date)}
-              placeholderText="Pilih Tanggal Akad"
+              onChange={(date: Date | undefined) => setAkadDate(date)}
+              placeholder="Pilih Tanggal Akad"
               isClearable
             />
           </div>
@@ -317,8 +322,8 @@ const TemplateForm = ({ templateId, existingData = null }: TemplateFormProps) =>
             <DatePicker
               id="receptionDate"
               selected={receptionDate}
-              onChange={(date: Date) => setReceptionDate(date)}
-              placeholderText="Pilih Tanggal Resepsi"
+              onChange={(date: Date | undefined) => setReceptionDate(date)}
+              placeholder="Pilih Tanggal Resepsi"
               isClearable
             />
           </div>
@@ -366,7 +371,7 @@ const TemplateForm = ({ templateId, existingData = null }: TemplateFormProps) =>
           <ImageUpload
             multiple
             value={uploadedPhotos}
-            onChange={(urls) => setUploadedPhotos(urls)}
+            onChange={handleUploadedPhotosChange}
           />
         </div>
       </div>

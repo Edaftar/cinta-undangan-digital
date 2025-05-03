@@ -1,7 +1,7 @@
 
 import React from "react";
 import { format } from "date-fns";
-import { idID } from "date-fns/locale";
+import { id } from "date-fns/locale";
 import { Leaf, MapPin, Calendar } from "lucide-react";
 import MusicPlayer from "@/components/MusicPlayer";
 
@@ -53,7 +53,7 @@ const MinimalistGreenTemplate = ({ data }: MinimalistGreenTemplateProps) => {
           </h1>
           <div className="mb-6 w-16 h-px mx-auto" style={{ backgroundColor: accentColor }}></div>
           <p className="text-xl" style={{ color: primaryColor }}>
-            {format(mainDate, "EEEE, dd MMMM yyyy", { locale: idID })}
+            {format(mainDate, "EEEE, dd MMMM yyyy", { locale: id })}
           </p>
         </div>
       </section>
@@ -120,10 +120,10 @@ const MinimalistGreenTemplate = ({ data }: MinimalistGreenTemplateProps) => {
                 When
               </h3>
               <p className="text-lg mb-1" style={{ color: primaryColor }}>
-                {format(mainDate, "EEEE", { locale: idID })}
+                {format(mainDate, "EEEE", { locale: id })}
               </p>
               <p className="text-lg mb-4" style={{ color: primaryColor }}>
-                {format(mainDate, "dd MMMM yyyy", { locale: idID })}
+                {format(mainDate, "dd MMMM yyyy", { locale: id })}
               </p>
               <p className="text-lg" style={{ color: primaryColor }}>
                 {format(mainDate, "HH:mm")} WIB

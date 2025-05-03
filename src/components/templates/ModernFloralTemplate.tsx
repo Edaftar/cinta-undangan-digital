@@ -1,7 +1,7 @@
 
 import React from "react";
 import { format } from "date-fns";
-import { idID } from "date-fns/locale";
+import { id } from "date-fns/locale";
 import { Heart, MapPin, Calendar, Clock } from "lucide-react";
 import MusicPlayer from "@/components/MusicPlayer";
 
@@ -52,7 +52,7 @@ const ModernFloralTemplate = ({ data }: ModernFloralTemplateProps) => {
             <div className="w-12 h-px bg-pink-300"></div>
           </div>
           <p className="text-xl text-gray-700">
-            {format(mainDate, "EEEE, dd MMMM yyyy", { locale: idID })}
+            {format(mainDate, "EEEE, dd MMMM yyyy", { locale: id })}
           </p>
         </div>
       </section>
@@ -116,10 +116,10 @@ const ModernFloralTemplate = ({ data }: ModernFloralTemplateProps) => {
               <Calendar className="w-10 h-10 mx-auto mb-4 text-pink-400" />
               <h3 className="text-xl font-medium mb-4 text-gray-800">Date</h3>
               <p className="text-gray-700">
-                {format(mainDate, "EEEE", { locale: idID })}
+                {format(mainDate, "EEEE", { locale: id })}
               </p>
               <p className="text-gray-700">
-                {format(mainDate, "dd MMMM yyyy", { locale: idID })}
+                {format(mainDate, "dd MMMM yyyy", { locale: id })}
               </p>
             </div>
             

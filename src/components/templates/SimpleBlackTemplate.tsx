@@ -1,7 +1,7 @@
 
 import React from "react";
 import { format } from "date-fns";
-import { idID } from "date-fns/locale";
+import { id } from "date-fns/locale";
 import { MapPin, Calendar } from "lucide-react";
 import MusicPlayer from "@/components/MusicPlayer";
 
@@ -41,7 +41,7 @@ const SimpleBlackTemplate = ({ data }: SimpleBlackTemplateProps) => {
             {data.bride_name} & {data.groom_name}
           </h2>
           <p className="text-xl md:text-2xl">
-            {format(mainDate, "EEEE, dd MMMM yyyy", { locale: idID })}
+            {format(mainDate, "EEEE, dd MMMM yyyy", { locale: id })}
           </p>
         </div>
       </section>
@@ -95,7 +95,7 @@ const SimpleBlackTemplate = ({ data }: SimpleBlackTemplateProps) => {
               <Calendar className="w-12 h-12 mx-auto mb-4" />
               <h3 className="text-2xl font-bold mb-4">Date & Time</h3>
               <p className="text-xl">
-                {format(mainDate, "EEEE, dd MMMM yyyy", { locale: idID })}
+                {format(mainDate, "EEEE, dd MMMM yyyy", { locale: id })}
               </p>
               <p className="text-xl">{format(mainDate, "HH:mm")} WIB</p>
               
