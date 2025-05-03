@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { fetchInvitationBySlug } from "@/services/invitationService";
@@ -9,6 +10,7 @@ import MinimalistGreenTemplate from "@/components/templates/MinimalistGreenTempl
 import { templates } from "@/data/templates";
 import LoadingScreen from "@/components/LoadingScreen";
 import ErrorMessage from "@/components/ErrorMessage";
+import MusicPlayer from "@/components/MusicPlayer";
 
 const PreviewTemplate = () => {
   const { slug } = useParams<{ slug: string }>();

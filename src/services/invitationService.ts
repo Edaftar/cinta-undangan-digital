@@ -53,6 +53,7 @@ export interface CreateInvitationInput {
   bride_photo?: string;
   // Add music URL field
   music_url?: string;
+  user_id: string; // Add user_id to match the database expectation
 }
 
 // Function to create a new invitation

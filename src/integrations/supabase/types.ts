@@ -77,6 +77,7 @@ export type Database = {
           love_story: string | null
           main_date: string
           music_id: string | null
+          music_url: string | null
           reception_date: string | null
           slug: string
           template_id: string
@@ -104,6 +105,7 @@ export type Database = {
           love_story?: string | null
           main_date: string
           music_id?: string | null
+          music_url?: string | null
           reception_date?: string | null
           slug: string
           template_id: string
@@ -131,6 +133,7 @@ export type Database = {
           love_story?: string | null
           main_date?: string
           music_id?: string | null
+          music_url?: string | null
           reception_date?: string | null
           slug?: string
           template_id?: string
