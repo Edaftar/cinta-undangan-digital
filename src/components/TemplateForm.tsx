@@ -1,5 +1,5 @@
-
-import React, { useState, useEffect } from "react";
+import MusicSelector from "@/components/MusicSelector";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,7 +75,8 @@ const TemplateForm: React.FC<TemplateFormProps> = ({ templateId, existingData })
   const [existingGroomPhoto, setExistingGroomPhoto] = useState<string | null>(null);
   const [existingGallery, setExistingGallery] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [selectedMusic, setSelectedMusic] = useState<string>(existingData?.music_url || "");
+  
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -221,7 +222,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({ templateId, existingData })
         galleryUrls.push(url);
       }
 
-      // Prepare invitation data
+      // Prepare invitation data with music field
       const invitationData = {
         user_id: user.id,
         template_id: templateId,
@@ -244,6 +245,7 @@ const TemplateForm: React.FC<TemplateFormProps> = ({ templateId, existingData })
         love_story: values.loveStory,
         gallery: galleryUrls,
         active: true,
+        music_url: selectedMusic, // Add the selected music URL
       };
 
       let response;
@@ -761,6 +763,16 @@ const TemplateForm: React.FC<TemplateFormProps> = ({ templateId, existingData })
             </div>
           </div>
           
+          <div className="space-y-6 bg-wedding-ivory p-4 rounded-md border border-wedding-champagne/50">
+            <h3 className="text-lg font-semibold border-b pb-2 mb-4">Musik Latar</h3>
+            
+            <MusicSelector
+              selectedMusic={selectedMusic}
+              onMusicChange={setSelectedMusic}
+            />
+          </div>
+          
+
           <Button
             type="submit"
             className="w-full bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white"

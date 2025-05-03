@@ -1,127 +1,156 @@
 
-import { useState, useRef, useEffect } from "react";
-import { Volume2, VolumeX, Music } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Volume2, VolumeX, Music } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { extractYoutubeId, extractSpotifyId } from "@/utils/musicUtils";
 
 interface MusicPlayerProps {
-  audioUrl: string;
-  title?: string;
-  artist?: string;
+  musicUrl: string;
   autoplay?: boolean;
-  showControls?: boolean;
-  iconOnly?: boolean;
+  initialMuted?: boolean;
 }
 
-const MusicPlayer = ({
-  audioUrl,
-  title,
-  artist,
+const MusicPlayer: React.FC<MusicPlayerProps> = ({
+  musicUrl,
   autoplay = false,
-  showControls = true,
-  iconOnly = false
-}: MusicPlayerProps) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audioReady, setAudioReady] = useState(false);
+  initialMuted = false,
+}) => {
+  const [isPlaying, setIsPlaying] = useState(autoplay);
+  const [isMuted, setIsMuted] = useState(initialMuted);
+  const [volume, setVolume] = useState(70);
+  const [showVolumeControl, setShowVolumeControl] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const youtubeId = extractYoutubeId(musicUrl);
+  const spotifyId = extractSpotifyId(musicUrl);
+  const isExternalPlayer = !!(youtubeId || spotifyId);
 
   useEffect(() => {
-    const audio = new Audio(audioUrl);
-    audioRef.current = audio;
-    
-    audio.addEventListener("canplaythrough", () => {
-      setAudioReady(true);
-      if (autoplay) {
-        try {
-          audio.play()
-            .then(() => setIsPlaying(true))
-            .catch((error) => {
-              console.error("Autoplay prevented:", error);
-              setIsPlaying(false);
-            });
-        } catch (error) {
-          console.error("Error playing audio:", error);
-        }
+    if (!isExternalPlayer && musicUrl) {
+      if (!audioRef.current) {
+        audioRef.current = new Audio(musicUrl);
+        audioRef.current.loop = true;
+      } else {
+        audioRef.current.src = musicUrl;
       }
-    });
-    
+
+      audioRef.current.volume = volume / 100;
+      audioRef.current.muted = isMuted;
+
+      if (autoplay && !isMuted) {
+        audioRef.current.play()
+          .catch(error => {
+            console.log("Autoplay prevented by browser:", error);
+            setIsPlaying(false);
+          });
+      }
+    }
+
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current.src = "";
+        audioRef.current.src = '';
       }
     };
-  }, [audioUrl, autoplay]);
+  }, [musicUrl, autoplay, isMuted]);
 
   const togglePlay = () => {
-    if (!audioRef.current || !audioReady) return;
-    
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current.play()
-        .then(() => setIsPlaying(true))
-        .catch((error) => {
-          console.error("Error playing audio:", error);
-          setIsPlaying(false);
-        });
+    if (isExternalPlayer) {
+      // Can't control external player directly
+      return;
+    }
+
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play()
+          .catch(error => console.log("Playback failed:", error));
+      }
+      setIsPlaying(!isPlaying);
     }
   };
 
-  if (iconOnly) {
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="absolute top-4 right-4 z-10"
-      >
-        <Button
-          variant="outline"
-          size="sm"
-          className="rounded-full h-10 w-10 flex items-center justify-center bg-white/80 backdrop-blur-sm border-none"
-          onClick={togglePlay}
-          aria-label={isPlaying ? "Pause music" : "Play music"}
-        >
-          <motion.div
-            animate={{ rotate: isPlaying ? 360 : 0 }}
-            transition={{ duration: 3, repeat: isPlaying ? Infinity : 0, ease: "linear" }}
-          >
-            <Music size={16} className={isPlaying ? "text-wedding-rosegold" : "text-gray-500"} />
-          </motion.div>
-        </Button>
-      </motion.div>
-    );
+  const toggleMute = () => {
+    if (audioRef.current) {
+      audioRef.current.muted = !isMuted;
+    }
+    setIsMuted(!isMuted);
+  };
+
+  const handleVolumeChange = (value: number[]) => {
+    const newVolume = value[0];
+    setVolume(newVolume);
+    
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume / 100;
+    }
+  };
+
+  if (!musicUrl) {
+    return null;
   }
 
   return (
-    <AnimatePresence>
-      {showControls && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="flex items-center gap-3 bg-white/80 backdrop-blur-sm p-3 rounded-full shadow-sm"
+    <div className="fixed bottom-4 right-4 z-50">
+      <div className="bg-white/90 backdrop-blur-sm shadow-lg rounded-full border border-wedding-champagne px-3 py-2 flex items-center">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className={`rounded-full ${isMuted ? "text-gray-400" : "text-wedding-rosegold"}`}
+          onClick={toggleMute}
         >
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full h-8 w-8 flex items-center justify-center"
-            onClick={togglePlay}
-          >
-            {isPlaying ? <VolumeX size={16} /> : <Volume2 size={16} />}
-          </Button>
-          
-          {(title || artist) && (
-            <div className="text-xs text-gray-700">
-              {title && <p className="font-medium">{title}</p>}
-              {artist && <p className="text-gray-500">{artist}</p>}
-            </div>
+          {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+        </Button>
+
+        {showVolumeControl && (
+          <div className="w-24 mx-2">
+            <Slider
+              value={[volume]}
+              max={100}
+              step={1}
+              onValueChange={handleVolumeChange}
+              className="cursor-pointer"
+            />
+          </div>
+        )}
+
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="text-wedding-rosegold rounded-full"
+          onClick={() => setShowVolumeControl(!showVolumeControl)}
+        >
+          <Music size={18} />
+        </Button>
+
+        {!isExternalPlayer && (
+          <span className="text-xs text-gray-500 ml-1 hidden sm:inline">
+            {isPlaying ? "Musik dimainkan" : "Musik dihentikan"}
+          </span>
+        )}
+      </div>
+
+      {/* Hidden audio element for YouTube or Spotify if needed */}
+      {isExternalPlayer && (
+        <div className="hidden">
+          {youtubeId && (
+            <iframe
+              src={`https://www.youtube.com/embed/${youtubeId}?autoplay=${!isMuted && autoplay ? '1' : '0'}&controls=0&loop=1&playlist=${youtubeId}`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              title="YouTube Music Player"
+            />
           )}
-        </motion.div>
+          {spotifyId && (
+            <iframe
+              src={`https://open.spotify.com/embed/track/${spotifyId}`}
+              title="Spotify Music Player"
+              allow="encrypted-media"
+            />
+          )}
+        </div>
       )}
-    </AnimatePresence>
+    </div>
   );
 };
 

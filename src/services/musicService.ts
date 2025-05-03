@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface MusicOption {
   id: string;
@@ -7,6 +8,7 @@ export interface MusicOption {
   artist: string | null;
   url: string;
   is_active: boolean;
+  created_at: string;
 }
 
 export const fetchMusicOptions = async (): Promise<MusicOption[]> => {
@@ -14,67 +16,66 @@ export const fetchMusicOptions = async (): Promise<MusicOption[]> => {
     const { data, error } = await supabase
       .from("music_options")
       .select("*")
-      .eq("is_active", true)
-      .order("title");
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
     return data || [];
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching music options:", error);
-    return [];
+    throw error;
   }
 };
 
-export const fetchMusicById = async (id: string): Promise<MusicOption | null> => {
+export const fetchActiveMusicOptions = async (): Promise<MusicOption[]> => {
   try {
     const { data, error } = await supabase
       .from("music_options")
       .select("*")
-      .eq("id", id)
-      .single();
+      .eq("is_active", true)
+      .order("title", { ascending: true });
 
     if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error("Error fetching music:", error);
-    return null;
+    return data || [];
+  } catch (error: any) {
+    console.error("Error fetching active music options:", error);
+    throw error;
   }
 };
 
-export const createMusic = async (music: Omit<MusicOption, 'id'>): Promise<MusicOption | null> => {
+export const createMusic = async (musicData: Partial<MusicOption>): Promise<MusicOption> => {
   try {
     const { data, error } = await supabase
       .from("music_options")
-      .insert(music)
+      .insert([musicData])
       .select()
       .single();
 
     if (error) throw error;
     return data;
-  } catch (error) {
-    console.error("Error creating music option:", error);
-    return null;
+  } catch (error: any) {
+    console.error("Error creating music:", error);
+    throw error;
   }
 };
 
-export const updateMusic = async (id: string, music: Partial<Omit<MusicOption, 'id'>>): Promise<MusicOption | null> => {
+export const updateMusic = async (id: string, musicData: Partial<MusicOption>): Promise<MusicOption> => {
   try {
     const { data, error } = await supabase
       .from("music_options")
-      .update(music)
+      .update(musicData)
       .eq("id", id)
       .select()
       .single();
 
     if (error) throw error;
     return data;
-  } catch (error) {
-    console.error("Error updating music option:", error);
-    return null;
+  } catch (error: any) {
+    console.error("Error updating music:", error);
+    throw error;
   }
 };
 
-export const deleteMusic = async (id: string): Promise<boolean> => {
+export const deleteMusic = async (id: string): Promise<void> => {
   try {
     const { error } = await supabase
       .from("music_options")
@@ -82,109 +83,8 @@ export const deleteMusic = async (id: string): Promise<boolean> => {
       .eq("id", id);
 
     if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error("Error deleting music option:", error);
-    return false;
-  }
-};
-
-// Image management functions
-export interface TemplateImage {
-  id: string;
-  name: string;
-  url: string;
-  size?: number;
-  created_at?: string;
-  type?: string;
-  isExternalUrl?: boolean;
-}
-
-export const uploadTemplateImage = async (file: File): Promise<TemplateImage | null> => {
-  try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
-
-    const { error } = await supabase.storage
-      .from('template_images')
-      .upload(filePath, file);
-
-    if (error) throw error;
-
-    const { data } = supabase.storage
-      .from('template_images')
-      .getPublicUrl(filePath);
-
-    return {
-      id: fileName,
-      name: file.name,
-      url: data.publicUrl,
-      size: file.size,
-      created_at: new Date().toISOString(),
-      type: file.type,
-      isExternalUrl: false
-    };
-  } catch (error) {
-    console.error("Error uploading image:", error);
-    return null;
-  }
-};
-
-export const saveExternalImageUrl = async (name: string, url: string): Promise<TemplateImage | null> => {
-  try {
-    // This doesn't actually save to Supabase storage but just returns the URL formatted
-    // in the same way as our internal images for consistent handling
-    return {
-      id: `external_${Math.random().toString(36).substring(2, 15)}`,
-      name: name,
-      url: url,
-      created_at: new Date().toISOString(),
-      isExternalUrl: true
-    };
-  } catch (error) {
-    console.error("Error saving external image URL:", error);
-    return null;
-  }
-};
-
-export const fetchTemplateImages = async (): Promise<TemplateImage[]> => {
-  try {
-    const { data, error } = await supabase.storage
-      .from('template_images')
-      .list();
-
-    if (error) throw error;
-
-    return data.map(item => ({
-      id: item.name,
-      name: item.name,
-      url: supabase.storage.from('template_images').getPublicUrl(item.name).data.publicUrl,
-      size: item.metadata?.size,
-      created_at: item.created_at,
-      isExternalUrl: false
-    }));
-  } catch (error) {
-    console.error("Error fetching template images:", error);
-    return [];
-  }
-};
-
-export const deleteTemplateImage = async (fileName: string): Promise<boolean> => {
-  try {
-    // Only delete if it's not an external URL
-    if (fileName.startsWith('external_')) {
-      return true;
-    }
-    
-    const { error } = await supabase.storage
-      .from('template_images')
-      .remove([fileName]);
-
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error("Error deleting template image:", error);
-    return false;
+  } catch (error: any) {
+    console.error("Error deleting music:", error);
+    throw error;
   }
 };
