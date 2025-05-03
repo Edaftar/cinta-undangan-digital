@@ -11,6 +11,14 @@ export interface MusicOption {
   created_at: string;
 }
 
+// Interface for creating new music
+export interface CreateMusicInput {
+  title: string;       // Required
+  url: string;         // Required
+  artist?: string;     // Optional
+  is_active?: boolean; // Optional
+}
+
 // Interface for template images
 export interface TemplateImage {
   id: string;
@@ -68,9 +76,8 @@ export const fetchMusicById = async (id: string): Promise<MusicOption | null> =>
   }
 };
 
-export const createMusic = async (musicData: Partial<MusicOption>): Promise<MusicOption> => {
+export const createMusic = async (musicData: CreateMusicInput): Promise<MusicOption> => {
   try {
-    // Fix: Ensure musicData is properly passed as a single object, not an array
     const { data, error } = await supabase
       .from("music_options")
       .insert(musicData)
