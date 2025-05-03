@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { MapPin, Calendar } from "lucide-react";
 import MusicPlayer from "@/components/MusicPlayer";
+import InteractiveMap from "@/components/InteractiveMap";
 
 interface SimpleBlackTemplateProps {
   data: {
@@ -136,6 +137,20 @@ const SimpleBlackTemplate = ({ data }: SimpleBlackTemplateProps) => {
           </div>
         </div>
       </section>
+      
+      {/* Map Location */}
+      {data.location_map_url && data.location_address && (
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-4">
+            <h2 className="text-4xl font-bold mb-12 text-center">Location</h2>
+            <InteractiveMap 
+              locationAddress={data.location_address} 
+              locationMapUrl={data.location_map_url} 
+              className="max-w-4xl mx-auto"
+            />
+          </div>
+        </section>
+      )}
       
       {/* Gallery */}
       {data.gallery && data.gallery.length > 0 && (
