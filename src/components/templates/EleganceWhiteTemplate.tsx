@@ -1,9 +1,10 @@
-
 import { useEffect, useState } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { CalendarCheck, Map, Clock, Heart, ChevronDown } from 'lucide-react';
+
+import MusicPlayer from '../MusicPlayer';
 
 interface TemplateProps {
   data: {
@@ -23,6 +24,8 @@ interface TemplateProps {
     location_map_url?: string;
     love_story?: string;
     gallery?: string[];
+    // Add music_url to the interface
+    music_url?: string;
   };
 }
 
@@ -365,6 +368,16 @@ const EleganceWhiteTemplate = ({ data }: TemplateProps) => {
       <footer className="py-8 px-4 bg-white text-center text-gray-500 text-sm">
         <p>© {new Date().getFullYear()} - Digital Wedding Invitation</p>
       </footer>
+      
+      {/* Music Player - Add this at the end */}
+      {data.music_url && (
+        <MusicPlayer 
+          musicUrl={data.music_url} 
+          title={`${data.bride_name} & ${data.groom_name}`}
+          autoplay={true}
+          initialMuted={false}
+        />
+      )}
     </div>
   );
 };

@@ -1,36 +1,79 @@
+
 import { useState, useEffect } from "react";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Play, Pause, Music, ExternalLink } from "lucide-react";
-import { fetchActiveMusicOptions, MusicOption } from "@/services/musicService";
+import { Music, ExternalLink, Play, Pause } from "lucide-react";
+import { MusicOption, fetchActiveMusicOptions } from "@/services/musicService";
 import { toast } from "sonner";
-import { extractYoutubeId, extractSpotifyId, isSupportedMusicUrl } from "@/utils/musicUtils";
+import { isSupportedMusicUrl } from "@/utils/musicUtils";
 
 interface MusicSelectorProps {
-  selectedMusic: string;
-  onMusicChange: (url: string) => void;
+  value: string | null;
+  onChange: (value: string | null) => void;
 }
 
-export default function MusicSelector({ selectedMusic, onMusicChange }: MusicSelectorProps) {
+export default function MusicSelector({ value, onChange }: MusicSelectorProps) {
   const [musicOptions, setMusicOptions] = useState<MusicOption[]>([]);
   const [loading, setLoading] = useState(true);
-  const [customUrl, setCustomUrl] = useState("");
-  const [activeTab, setActiveTab] = useState<string>("library");
-  const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
+  const [selectedMusicType, setSelectedMusicType] = useState<"library" | "external">("library");
+  const [externalMusicUrl, setExternalMusicUrl] = useState("");
+  const [selectedLibraryMusic, setSelectedLibraryMusic] = useState<string | null>(null);
+  const [playingUrl, setPlayingUrl] = useState<string | null>(null);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
 
+  // Load music options from the library
   useEffect(() => {
-    loadMusicOptions();
+    const loadMusicOptions = async () => {
+      try {
+        const data = await fetchActiveMusicOptions();
+        setMusicOptions(data);
+        
+        // If value exists and it's one of our library options, select library tab
+        if (value) {
+          const isLibraryMusic = data.some(option => option.url === value);
+          if (isLibraryMusic) {
+            setSelectedMusicType("library");
+            setSelectedLibraryMusic(value);
+          } else {
+            setSelectedMusicType("external");
+            setExternalMusicUrl(value);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load music options:", error);
+        toast.error("Gagal memuat pilihan musik");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Initialize custom URL if selectedMusic is not in our library
-    if (selectedMusic && !selectedMusic.includes("music_options")) {
-      setCustomUrl(selectedMusic);
-      setActiveTab("custom");
+    loadMusicOptions();
+  }, [value]);
+
+  // Handle music selection change
+  useEffect(() => {
+    if (selectedMusicType === "library") {
+      onChange(selectedLibraryMusic);
+    } else {
+      if (externalMusicUrl && isSupportedMusicUrl(externalMusicUrl)) {
+        onChange(externalMusicUrl);
+      } else if (externalMusicUrl) {
+        // Don't clear the field, but don't update the value either
+      } else {
+        onChange(null);
+      }
     }
-  }, [selectedMusic]);
+  }, [selectedMusicType, selectedLibraryMusic, externalMusicUrl, onChange]);
 
   // Clean up audio on unmount
   useEffect(() => {
@@ -42,190 +85,109 @@ export default function MusicSelector({ selectedMusic, onMusicChange }: MusicSel
     };
   }, [audioElement]);
 
-  const loadMusicOptions = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchActiveMusicOptions();
-      setMusicOptions(data);
-    } catch (error) {
-      console.error("Failed to load music options:", error);
-      toast.error("Gagal memuat pilihan musik");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Handle playing preview
   const handlePlayPreview = (url: string) => {
+    // If already playing, stop it
     if (audioElement) {
       audioElement.pause();
       audioElement.src = "";
+      setAudioElement(null);
+      setPlayingUrl(null);
     }
 
-    // If clicking on already playing audio, just stop it
-    if (currentlyPlaying === url) {
-      setCurrentlyPlaying(null);
+    // If clicking on the same URL that's already playing, just stop
+    if (playingUrl === url) {
       return;
     }
 
-    // Otherwise play the selected audio
+    // Create new audio element and play
     const audio = new Audio(url);
+    audio.volume = 0.5;
+    
     audio.oncanplaythrough = () => {
       audio.play().catch(err => {
         console.error("Failed to play audio:", err);
         toast.error("Gagal memutar audio");
       });
     };
+    
     audio.onended = () => {
-      setCurrentlyPlaying(null);
+      setPlayingUrl(null);
+      setAudioElement(null);
     };
+    
     audio.onerror = () => {
       toast.error("URL audio tidak valid");
-      setCurrentlyPlaying(null);
+      setPlayingUrl(null);
+      setAudioElement(null);
     };
 
     setAudioElement(audio);
-    setCurrentlyPlaying(url);
+    setPlayingUrl(url);
   };
 
-  const handleCustomUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCustomUrl(e.target.value);
-  };
-
-  const handleApplyCustomUrl = () => {
-    if (!customUrl.trim()) {
-      toast.error("URL tidak boleh kosong");
-      return;
+  // Handle external URL validation
+  const handleExternalUrlChange = (url: string) => {
+    setExternalMusicUrl(url);
+    if (url && !isSupportedMusicUrl(url)) {
+      toast.warning("Format URL tidak didukung. Gunakan URL mp3 langsung, YouTube, atau Spotify.");
     }
-
-    if (!isSupportedMusicUrl(customUrl)) {
-      toast.error("URL tidak didukung. Gunakan URL langsung MP3/OGG atau YouTube/Spotify");
-      return;
-    }
-
-    onMusicChange(customUrl);
-    toast.success("Musik telah dipilih");
-  };
-
-  const renderMusicPreview = (url: string) => {
-    const youtubeId = extractYoutubeId(url);
-    const spotifyId = extractSpotifyId(url);
-
-    if (youtubeId) {
-      return (
-        <div className="mt-2 aspect-video w-full">
-          <iframe
-            width="100%"
-            height="100%"
-            src={`https://www.youtube.com/embed/${youtubeId}`}
-            title="YouTube video player"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
-        </div>
-      );
-    } else if (spotifyId) {
-      return (
-        <div className="mt-2">
-          <iframe
-            style={{ borderRadius: "12px" }}
-            src={`https://open.spotify.com/embed/track/${spotifyId}`}
-            width="100%"
-            height="152"
-            frameBorder="0"
-            allowFullScreen
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            loading="lazy"
-          ></iframe>
-        </div>
-      );
-    } else if (url) {
-      // For direct audio URLs
-      return (
-        <div className="mt-2 flex justify-center">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => handlePlayPreview(url)}
-            className={currentlyPlaying === url ? "bg-wedding-rosegold text-white" : ""}
-          >
-            {currentlyPlaying === url ? (
-              <>
-                <Pause className="mr-1 h-4 w-4" />
-                Berhenti
-              </>
-            ) : (
-              <>
-                <Play className="mr-1 h-4 w-4" />
-                Putar
-              </>
-            )}
-          </Button>
-        </div>
-      );
-    }
-    return null;
   };
 
   return (
     <div className="space-y-4">
-      <Label className="text-base font-medium">Musik Latar</Label>
+      <Label>Musik Latar</Label>
       
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full">
-          <TabsTrigger value="library" className="flex-1">
-            <Music className="mr-1 h-4 w-4" />
+      <Tabs value={selectedMusicType} onValueChange={(v) => setSelectedMusicType(v as "library" | "external")}>
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="library" className="flex items-center gap-1">
+            <Music className="h-4 w-4" />
             Pustaka Musik
           </TabsTrigger>
-          <TabsTrigger value="custom" className="flex-1">
-            <ExternalLink className="mr-1 h-4 w-4" />
+          <TabsTrigger value="external" className="flex items-center gap-1">
+            <ExternalLink className="h-4 w-4" />
             Link Eksternal
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="library" className="mt-4">
+        <TabsContent value="library" className="space-y-4">
           {loading ? (
-            <div className="text-center py-6">Memuat pilihan musik...</div>
+            <div className="text-center py-4">
+              <div className="animate-spin h-6 w-6 border-2 border-wedding-rosegold border-t-transparent rounded-full mx-auto"></div>
+              <p className="text-sm text-gray-500 mt-2">Memuat pilihan musik...</p>
+            </div>
           ) : musicOptions.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">Tidak ada pilihan musik tersedia</div>
+            <p className="text-sm text-gray-500 text-center py-4">
+              Tidak ada pilihan musik yang tersedia. 
+              Silakan gunakan link eksternal.
+            </p>
           ) : (
-            <RadioGroup
-              value={selectedMusic}
-              onValueChange={onMusicChange}
-              className="space-y-3"
+            <RadioGroup 
+              value={selectedLibraryMusic || ""} 
+              onValueChange={setSelectedLibraryMusic}
+              className="space-y-2"
             >
               {musicOptions.map((option) => (
-                <div key={option.id} className="flex items-center justify-between space-x-2 p-3 border rounded-lg">
-                  <div className="flex items-start space-x-3">
+                <div key={option.id} className="flex items-center justify-between border rounded-lg p-3 hover:bg-gray-50">
+                  <div className="flex items-center space-x-2">
                     <RadioGroupItem value={option.url} id={option.id} />
-                    <div>
-                      <Label htmlFor={option.id} className="font-medium cursor-pointer">
-                        {option.title}
-                      </Label>
-                      {option.artist && (
-                        <p className="text-sm text-gray-500">{option.artist}</p>
-                      )}
-                    </div>
+                    <Label htmlFor={option.id} className="cursor-pointer flex-1">
+                      <div>{option.title}</div>
+                      <div className="text-xs text-gray-500">{option.artist || "Unknown Artist"}</div>
+                    </Label>
                   </div>
+                  
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => handlePlayPreview(option.url)}
-                    className={`min-w-[80px] ${currentlyPlaying === option.url ? "bg-wedding-rosegold text-white" : ""}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePlayPreview(option.url);
+                    }}
+                    className={playingUrl === option.url ? "text-wedding-rosegold" : ""}
                   >
-                    {currentlyPlaying === option.url ? (
-                      <>
-                        <Pause className="mr-1 h-4 w-4" />
-                        Berhenti
-                      </>
-                    ) : (
-                      <>
-                        <Play className="mr-1 h-4 w-4" />
-                        Putar
-                      </>
-                    )}
+                    {playingUrl === option.url ? <Pause size={18} /> : <Play size={18} />}
                   </Button>
                 </div>
               ))}
@@ -233,35 +195,55 @@ export default function MusicSelector({ selectedMusic, onMusicChange }: MusicSel
           )}
         </TabsContent>
         
-        <TabsContent value="custom" className="mt-4 space-y-3">
+        <TabsContent value="external" className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="customMusicUrl">
-              URL Musik Eksternal
-              <span className="ml-1 text-sm text-gray-500">(YouTube, Spotify, atau URL MP3 langsung)</span>
-            </Label>
-            <div className="flex space-x-2">
-              <Input
-                id="customMusicUrl"
-                placeholder="https://"
-                value={customUrl}
-                onChange={handleCustomUrlChange}
-              />
-              <Button 
-                type="button"
-                onClick={handleApplyCustomUrl}
-                className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white"
-              >
-                Pilih
-              </Button>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="externalMusicUrl">Link URL Musik</Label>
+              {externalMusicUrl && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handlePlayPreview(externalMusicUrl)}
+                  disabled={!isSupportedMusicUrl(externalMusicUrl)}
+                  className={playingUrl === externalMusicUrl ? "text-wedding-rosegold" : ""}
+                >
+                  {playingUrl === externalMusicUrl ? <Pause size={16} /> : <Play size={16} />}
+                  <span className="ml-1 text-xs">
+                    {playingUrl === externalMusicUrl ? "Stop" : "Uji"}
+                  </span>
+                </Button>
+              )}
             </div>
+            <Input
+              id="externalMusicUrl"
+              placeholder="https://example.com/music.mp3 atau YouTube/Spotify URL"
+              value={externalMusicUrl}
+              onChange={(e) => handleExternalUrlChange(e.target.value)}
+            />
             <p className="text-xs text-gray-500">
-              Didukung: Link MP3/OGG langsung, YouTube, atau Spotify
+              Didukung: file MP3 langsung, YouTube, atau Spotify
             </p>
           </div>
-          
-          {customUrl && renderMusicPreview(customUrl)}
         </TabsContent>
       </Tabs>
+      
+      {/* Option to remove music */}
+      {value && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            onChange(null);
+            setSelectedLibraryMusic(null);
+            setExternalMusicUrl("");
+          }}
+          className="mt-2"
+        >
+          Hapus Musik
+        </Button>
+      )}
     </div>
   );
 }

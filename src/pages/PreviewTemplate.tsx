@@ -1,563 +1,104 @@
-
-import { useState, useEffect } from "react";
-import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
-import { templates } from "@/data/templates";
-import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, Share2, Download, Heart, Loader2 } from "lucide-react";
-import ElegantRoseTemplate from "@/components/templates/ElegantRoseTemplate";
-import MinimalistTemplate from "@/components/templates/MinimalistTemplate";
-import RusticTemplate from "@/components/templates/RusticTemplate";
-import TraditionalJavaTemplate from "@/components/templates/TraditionalJavaTemplate";
-import ModernGeometryTemplate from "@/components/templates/ModernGeometryTemplate";
-import IslamicOrnamentTemplate from "@/components/templates/IslamicOrnamentTemplate";
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { fetchInvitationBySlug } from "@/services/invitationService";
 import EleganceWhiteTemplate from "@/components/templates/EleganceWhiteTemplate";
-import AdvancedRSVP from "@/components/AdvancedRSVP";
-import { toast } from "sonner";
-import { generateInvitationPDF } from "@/utils/pdfUtils";
-import MusicPlayer from "@/components/MusicPlayer";
-import { fetchMusicById } from "@/services/musicService";
-import { motion } from "framer-motion";
-
-interface Invitation {
-  id: string;
-  title: string;
-  template_id: string;
-  slug: string;
-  bride_name: string;
-  bride_father?: string;
-  bride_mother?: string;
-  bride_photo?: string;
-  groom_name: string;
-  groom_father?: string;
-  groom_mother?: string;
-  groom_photo?: string;
-  main_date: string;
-  akad_date?: string;
-  reception_date?: string;
-  location: string;
-  location_address?: string;
-  location_map_url?: string;
-  love_story?: string;
-  gallery?: string[];
-  user_id: string;
-  music_id?: string;
-}
+import SimpleBlackTemplate from "@/components/templates/SimpleBlackTemplate";
+import ClassicGoldTemplate from "@/components/templates/ClassicGoldTemplate";
+import ModernFloralTemplate from "@/components/templates/ModernFloralTemplate";
+import MinimalistGreenTemplate from "@/components/templates/MinimalistGreenTemplate";
+import { templates } from "@/data/templates";
+import LoadingScreen from "@/components/LoadingScreen";
+import ErrorMessage from "@/components/ErrorMessage";
 
 const PreviewTemplate = () => {
-  const { templateId, slug } = useParams<{ templateId?: string, slug?: string }>();
-  const [invitation, setInvitation] = useState<Invitation | null>(null);
+  const { slug } = useParams<{ slug: string }>();
+  const [weddingData, setWeddingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [downloading, setDownloading] = useState(false);
-  const [music, setMusic] = useState<{url: string, title?: string, artist?: string} | null>(null);
-  const location = useLocation();
-  const navigate = useNavigate();
-  
-  // Get data from location state if available (passed from the form)
-  const weddingData = location.state?.weddingData;
 
-  // Define the getTemplateComponent function earlier in the file
-  const getTemplateComponent = (templateId?: string, data?: any) => {
-    // Make sure data exists before trying to render a template
-    if (!data) {
-      return (
-        <div className="p-8 text-center">
-          <p>Data undangan tidak tersedia</p>
-        </div>
-      );
-    }
-    
-    // Fix: Make sure we normalize gallery data to avoid undefined values
-    const safeData = {
-      ...data,
-      // Make sure gallery exists and is an array
-      gallery: Array.isArray(data.gallery) ? data.gallery : []
-    };
-    
-    console.log("Template being rendered:", templateId);
-    console.log("With data:", safeData);
-    
-    switch(templateId) {
-      case 'elegant-1':
-        return <ElegantRoseTemplate data={safeData} />;
-      case 'minimalist-1':
-        return <MinimalistTemplate data={safeData} />;
-      case 'rustic-1':
-        return <RusticTemplate data={safeData} />;
-      case 'traditional-1':
-      case 'jawa-1':
-        return <TraditionalJavaTemplate data={safeData} />;
-      case 'modern-1':
-        return <ModernGeometryTemplate data={safeData} />;
-      case 'islamic-1':
-      case 'islamic-2':
-        return <IslamicOrnamentTemplate data={safeData} />;
-      case 'elegance-white':
-        return <EleganceWhiteTemplate data={safeData} />;
-      default:
-        return <ElegantRoseTemplate data={safeData} />; // Fallback to elegant template
-    }
-  };
-
-  // If we have a slug parameter, fetch invitation from database
   useEffect(() => {
-    const fetchInvitationBySlug = async () => {
-      if (!slug) {
-        setLoading(false);
-        return;
-      }
-      
+    const loadWeddingData = async () => {
       setLoading(true);
       setError(null);
-      
       try {
-        console.log("Fetching invitation with slug:", slug);
-        const { data, error } = await supabase
-          .from("invitations")
-          .select("*")
-          .eq("slug", slug)
-          .eq("active", true)
-          .single();
-
-        if (error) {
-          console.error("Error fetching invitation:", error);
-          setError("Undangan tidak ditemukan atau sudah tidak aktif");
-          throw error;
+        if (!slug) {
+          setError("Invalid URL.");
+          return;
         }
-        
+        const data = await fetchInvitationBySlug(slug);
         if (data) {
-          console.log("Fetched invitation data:", data);
-          setInvitation(data);
-          
-          // Fetch music if music_id is available
-          if (data.music_id) {
-            try {
-              const musicData = await fetchMusicById(data.music_id);
-              if (musicData) {
-                setMusic({
-                  url: musicData.url,
-                  title: musicData.title,
-                  artist: musicData.artist || undefined
-                });
-              }
-            } catch (musicError) {
-              console.error("Error fetching music:", musicError);
-              // Don't fail the whole page for music error
-            }
-          }
+          setWeddingData(data);
         } else {
-          console.error("No invitation found with slug:", slug);
-          setError("Undangan tidak ditemukan");
+          setError("Invitation not found or is inactive.");
         }
-      } catch (error: any) {
-        console.error("Error fetching invitation:", error);
-        setError("Gagal memuat undangan");
+      } catch (e: any) {
+        console.error("Failed to load wedding data:", e);
+        setError(e.message || "Failed to load invitation data.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchInvitationBySlug();
+    loadWeddingData();
   }, [slug]);
 
-  // Use template ID from params or from fetched invitation
-  const currentTemplateId = templateId || invitation?.template_id;
-  const template = templates.find((t) => t.id === currentTemplateId);
-  
-  // Use data from weddingData (form) or fetched invitation
-  const displayData = weddingData || invitation;
+  const renderTemplate = () => {
+    if (!weddingData) return null;
 
-  console.log("Current template ID:", currentTemplateId);
-  console.log("Display data:", displayData);
+    const templateData = {
+      bride_name: weddingData.bride_name || "",
+      groom_name: weddingData.groom_name || "",
+      bride_photo: weddingData.bride_photo || "",
+      groom_photo: weddingData.groom_photo || "",
+      bride_father: weddingData.bride_father || "",
+      bride_mother: weddingData.bride_mother || "",
+      groom_father: weddingData.groom_father || "",
+      groom_mother: weddingData.groom_mother || "",
+      main_date: weddingData.main_date || new Date().toISOString(),
+      akad_date: weddingData.akad_date || "",
+      reception_date: weddingData.reception_date || "",
+      location: weddingData.location || "",
+      location_address: weddingData.location_address || "",
+      location_map_url: weddingData.location_map_url || "",
+      love_story: weddingData.love_story || "",
+      gallery: weddingData.gallery || [],
+      music_url: weddingData.music_url || "",
+    };
 
-  const handleShare = () => {
-    // Create the full URL including the base URL of the site
-    const fullUrl = `${window.location.origin}/invitation/${displayData?.slug}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: `Undangan Pernikahan ${displayData?.bride_name || 'Pengantin'} & ${displayData?.groom_name || 'Pengantin'}`,
-        text: 'Kami mengundang Anda untuk hadir di acara pernikahan kami',
-        url: fullUrl,
-      })
-      .catch(() => {
-        // Fallback if share fails
-        navigator.clipboard.writeText(fullUrl);
-        toast.success("Tautan berhasil disalin ke clipboard");
-      });
-    } else {
-      // Fallback for browsers that don't support sharing
-      navigator.clipboard.writeText(fullUrl);
-      toast.success("Tautan berhasil disalin ke clipboard");
+    const templateId = weddingData.template_id;
+    const template = templates.find((t) => t.id === templateId);
+
+    if (!template) {
+      return <ErrorMessage message="Template not found." />;
     }
-  };
 
-  const handleDownloadPDF = async () => {
-    setDownloading(true);
-    try {
-      const result = await generateInvitationPDF('invitation-container', `undangan-${displayData?.bride_name}-${displayData?.groom_name}.pdf`);
-      if (result) {
-        toast.success("Undangan berhasil diunduh");
-      } else {
-        toast.error("Gagal mengunduh undangan");
-      }
-    } catch (error) {
-      toast.error("Gagal mengunduh undangan");
-      console.error("PDF download error:", error);
-    } finally {
-      setDownloading(false);
+    switch (templateId) {
+      case "elegance-white":
+        return <EleganceWhiteTemplate data={templateData} />;
+      case "simple-black":
+        return <SimpleBlackTemplate data={templateData} />;
+      case "classic-gold":
+        return <ClassicGoldTemplate data={templateData} />;
+        case "modern-floral":
+          return <ModernFloralTemplate data={templateData} />;
+        case "minimalist-green":
+          return <MinimalistGreenTemplate data={templateData} />;
+      default:
+        return <ErrorMessage message="Template not supported." />;
     }
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-wedding-ivory">
-        <Loader2 className="h-12 w-12 animate-spin text-wedding-rosegold" />
-        <p className="mt-4 text-gray-600">Memuat undangan...</p>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen flex flex-col bg-wedding-ivory">
-        <Navbar />
-        <main className="flex-grow flex flex-col items-center justify-center p-4">
-          <motion.h1 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-3xl font-bold mb-4"
-          >
-            Terjadi Kesalahan
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-gray-600 mb-6"
-          >
-            {error}
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-          >
-            <Button asChild>
-              <Link to="/" className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white">
-                <ChevronLeft size={16} />
-                Kembali ke Halaman Utama
-              </Link>
-            </Button>
-          </motion.div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  // For template gallery preview - show template not found if no template and no slug
-  if (!template && !slug) {
-    return (
-      <div className="min-h-screen flex flex-col bg-wedding-ivory">
-        <Navbar />
-        <main className="flex-grow flex flex-col items-center justify-center p-4">
-          <motion.h1 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-3xl font-bold mb-4"
-          >
-            Template Tidak Ditemukan
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-gray-600 mb-6"
-          >
-            Maaf, template yang Anda cari tidak tersedia.
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-          >
-            <Button asChild>
-              <Link to="/templates" className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white">
-                <ChevronLeft size={16} />
-                Kembali ke Galeri Template
-              </Link>
-            </Button>
-          </motion.div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  // This block handles both cases: template browsing (no data yet) and slug viewing (missing data)
-  if (!displayData) {
-    // For browsing templates with no data, create a placeholder
-    if (templateId && !slug) {
-      // We're just viewing a template from the gallery, show a default preview
-      const placeholderData = {
-        bride_name: "Nama Pengantin Wanita",
-        groom_name: "Nama Pengantin Pria",
-        main_date: new Date().toISOString(),
-        location: "Nama Lokasi Pernikahan",
-        location_address: "Alamat Lengkap Lokasi",
-        love_story: "Cerita cinta kami dimulai...",
-        gallery: []
-      };
-      
-      // Recursively call the same component with placeholder data
-      return (
-        <div className="min-h-screen flex flex-col bg-wedding-ivory">
-          <Navbar />
-          <main className="flex-grow py-8">
-            <div className="container mx-auto px-4">
-              <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                <Button
-                  variant="outline"
-                  className="border-wedding-rosegold text-wedding-rosegold hover:bg-wedding-light-blush"
-                  asChild
-                >
-                  <Link to="/templates">
-                    <ChevronLeft size={16} className="mr-1" />
-                    Kembali ke Galeri Template
-                  </Link>
-                </Button>
-              </div>
-              
-              <div className="text-center mb-8">
-                <h1 className="text-3xl md:text-4xl font-bold mb-2 font-playfair">Pratinjau Template</h1>
-                <p className="text-gray-600 max-w-2xl mx-auto">
-                  Ini adalah tampilan contoh dari template {template?.name}
-                </p>
-              </div>
-              
-              <div id="invitation-container" className="mx-auto max-w-4xl mb-8">
-                {getTemplateComponent(currentTemplateId, placeholderData)}
-              </div>
-              
-              <div className="text-center space-y-6 max-w-2xl mx-auto">
-                <div className="p-6 bg-wedding-light-blush rounded-lg shadow-sm">
-                  <Heart className="text-wedding-rosegold mx-auto mb-3" fill="#D8A7B1" />
-                  <p className="text-gray-700">
-                    Ini adalah pratinjau template. Untuk membuat undangan yang sesungguhnya, silakan isi form dengan data pernikahan Anda.
-                  </p>
-                </div>
-                
-                <div className="space-y-4 pt-4">
-                  <Button 
-                    className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white px-8"
-                    asChild
-                  >
-                    <Link to={`/create/${currentTemplateId}`}>
-                      Buat Undangan
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </main>
-          <Footer />
-        </div>
-      );
-    }
-
-    // For actual invitations with slug but missing data
-    return (
-      <div className="min-h-screen flex flex-col bg-wedding-ivory">
-        <Navbar />
-        <main className="flex-grow flex flex-col items-center justify-center p-4">
-          <motion.h1 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-3xl font-bold mb-4"
-          >
-            Undangan Tidak Ditemukan
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-gray-600 mb-6"
-          >
-            Maaf, undangan yang Anda cari tidak tersedia atau mungkin telah dinonaktifkan.
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-          >
-            <Button asChild>
-              <Link to="/" className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white">
-                <ChevronLeft size={16} />
-                Kembali ke Halaman Utama
-              </Link>
-            </Button>
-          </motion.div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  // If we're viewing a public invitation by slug, show only the template without navigation
-  if (slug && displayData) {
-    return (
-      <div className="relative">
-        {music && <MusicPlayer audioUrl={music.url} title={music.title} artist={music.artist} autoplay={true} iconOnly={true} />}
-        <div id="invitation-container">{getTemplateComponent(currentTemplateId, displayData)}</div>
-        
-        {/* Add RSVP section for public invitations */}
-        <section className="py-16 px-4 bg-wedding-ivory">
-          <div className="max-w-md mx-auto">
-            <AdvancedRSVP 
-              invitationId={invitation?.id || ""} 
-              invitationTitle={invitation?.title || ""} 
-              weddingDate={invitation?.main_date || ""}
-              weddingLocation={invitation?.location || ""}
-            />
-          </div>
-        </section>
-      </div>
-    );
+    return <ErrorMessage message={error} />;
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-wedding-ivory">
-      <Navbar />
-      <main className="flex-grow py-8">
-        <motion.div 
-          className="container mx-auto px-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-            <Button
-              variant="outline"
-              className="border-wedding-rosegold text-wedding-rosegold hover:bg-wedding-light-blush"
-              asChild
-            >
-              <Link to="/templates">
-                <ChevronLeft size={16} className="mr-1" />
-                Kembali ke Galeri Template
-              </Link>
-            </Button>
-            
-            <div className="flex gap-2">
-              <Button 
-                className="bg-wedding-sage hover:bg-wedding-sage/80 text-white"
-                onClick={handleShare}
-              >
-                <Share2 size={16} className="mr-1" />
-                Bagikan
-              </Button>
-              
-              <Button 
-                className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white"
-                onClick={handleDownloadPDF}
-                disabled={downloading}
-              >
-                {downloading ? (
-                  <>
-                    <Loader2 size={16} className="mr-2 animate-spin" />
-                    Mengunduh...
-                  </>
-                ) : (
-                  <>
-                    <Download size={16} className="mr-1" />
-                    Unduh PDF
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-          
-          <motion.div 
-            className="text-center mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-          >
-            <h1 className="text-3xl md:text-4xl font-bold mb-2 font-playfair">Pratinjau Undangan</h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Ini adalah tampilan undangan digital Anda menggunakan template {template?.name}
-            </p>
-          </motion.div>
-          
-          <motion.div 
-            id="invitation-container" 
-            className="mx-auto max-w-4xl mb-8"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.7 }}
-          >
-            {music && (
-              <div className="mb-4 flex justify-center">
-                <MusicPlayer 
-                  audioUrl={music.url}
-                  title={music.title}
-                  artist={music.artist}
-                />
-              </div>
-            )}
-            {getTemplateComponent(currentTemplateId, displayData)}
-          </motion.div>
-          
-          <motion.div 
-            className="text-center space-y-6 max-w-2xl mx-auto"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
-          >
-            <div className="p-6 bg-wedding-light-blush rounded-lg shadow-sm">
-              <Heart className="text-wedding-rosegold mx-auto mb-3" fill="#D8A7B1" />
-              <p className="text-gray-700">
-                {weddingData ? 
-                  "Undangan digital Anda sudah siap untuk dibagikan. Gunakan tombol 'Bagikan' untuk menyebarkan undangan kepada teman dan keluarga." :
-                  "Ini adalah pratinjau template. Untuk membuat undangan yang sesungguhnya, silakan isi form dengan data pernikahan Anda."
-                }
-              </p>
-            </div>
-            
-            <div className="space-y-4 pt-4">
-              {!weddingData && (
-                <Button 
-                  className="bg-wedding-rosegold hover:bg-wedding-deep-rosegold text-white px-8"
-                  asChild
-                >
-                  <Link to={`/create/${currentTemplateId}`}>
-                    Buat Undangan
-                  </Link>
-                </Button>
-              )}
-              
-              {weddingData && (
-                <Button 
-                  variant="outline"
-                  className="border-wedding-rosegold text-wedding-rosegold hover:bg-wedding-light-blush px-8"
-                  asChild
-                >
-                  <Link to={`/create/${currentTemplateId}`} state={{ weddingData }}>
-                    Edit Undangan
-                  </Link>
-                </Button>
-              )}
-            </div>
-          </motion.div>
-        </motion.div>
-      </main>
-      <Footer />
+    <div>
+      {renderTemplate()}
     </div>
   );
 };
